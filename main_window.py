@@ -156,7 +156,7 @@ class UIWindow(Tk):
             self.gpss_text['state'] = NORMAL
 
             return_code = self.execute_external_command(
-                "python", "D:/Python training/pyss/src/main.py", self.pygpss_full_file_name)
+                "python", self.peace_interpreter, self.pygpss_full_file_name)
             if return_code == 1:
                 messagebox.showerror("Error", "There are some problems with file")
                 return

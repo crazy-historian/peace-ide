@@ -10,6 +10,7 @@ class IniProcessing:
         self.config_file = configparser.ConfigParser()
         self.create_config_file()
 
+    # FixMe: check .ini file
     def create_config_file(self):
         # default settings
         if not isdir(self.path):
