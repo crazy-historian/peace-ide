@@ -1,4 +1,5 @@
 from os import getcwd
+from os.path import isdir
 import configparser
 import sys
 
@@ -6,28 +7,23 @@ import sys
 class IniProcessing:
     def __init__(self, path=None):
         self.path = path
-        self.config_file = None
+        self.config_file = configparser.ConfigParser()
+        self.create_config_file()
 
     def create_config_file(self):
-        self.config_file = configparser.ConfigParser()
-        self.config_file.add_section("settings")
-
         # default settings
-        self.config_file.set("settings", "font", "Consolas")
-        self.config_file.set("settings", "font_size", "12")
-        self.config_file.set("settings", "gpssh_path", "None")
-        self.config_file.set("settings", "gpssh_path", "None")
-
-
-        if not self.path:
+        if not isdir(self.path):
             self.path = f"{getcwd()}\\settings.ini"
-        else:
-            self.path += "\\settings.ini"
+            self.config_file.add_section("settings")
+            self.config_file.set("settings", "font", "Consolas")
+            self.config_file.set("settings", "font_size", "12")
+            self.config_file.set("settings", "gpssh_path", "None")
+            self.config_file.set("settings", "peace_core_path", "None")
 
         with open(self.path, "w") as ini_file:
             self.config_file.write(ini_file)
 
-    def return_config_file(self):
+    def get_config_file(self):
         if not self.config_file:
             self.create_config_file()
 
