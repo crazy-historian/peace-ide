@@ -9,8 +9,14 @@ def get_current_time():
     return datetime.now().strftime("%d-%m-%Y %H:%M")
 
 
+def check_path(path):
+    if ' ' in path or not path.isascii():
+        return False
+    else:
+        return True
+
+
 class PceFileProcessing:
-    # FixMe: суперконструктор с параметрами
     def __init__(self, ini_process=None, text_editor=None):
 
         self.ini_process = ini_process
@@ -41,6 +47,11 @@ class PceFileProcessing:
         else:
             file_name = filedialog.asksaveasfilename(title="Сохранение файла с pce-кодом", defaultextension=".pce")
             if not file_name:
+                return 1
+            elif not check_path(file_name):
+                messagebox.showwarning(f"Warning! {file_name} is incorrect",
+                                       "gpssh.exe doesn't support strings with spaces and no ASCII symbols. "
+                                       "Change directory or file name.")
                 return 1
             file = open(file_name, 'w+')
             file.write(code)
