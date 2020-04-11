@@ -40,7 +40,7 @@ class PceFileProcessing:
             return 0
         else:
             file_name = filedialog.asksaveasfilename(title="Сохранение файла с pce-кодом", defaultextension=".pce")
-            if file_name is None:
+            if not file_name:
                 return 1
             file = open(file_name, 'w+')
             file.write(code)
@@ -49,7 +49,8 @@ class PceFileProcessing:
 
     def file_save_as(self):
         self.update_file_info()
-        return self.file_save()
+        ret_code = self.file_save()
+        return ret_code
 
     def file_open(self):
         if self.file_close() <= 0:

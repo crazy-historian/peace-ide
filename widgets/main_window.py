@@ -47,7 +47,7 @@ class UIWindow(Tk):
         self.file_menu = Menu(self.main_menu, tearoff=0)
 
         # text tags
-        self.console.tag_config('error', background="white", foreground="red")
+        self.console.tag_config('external_message', background="white", foreground="red")
 
     def correct_window_size(self):
         screen_width = self.winfo_screenwidth()
@@ -62,17 +62,18 @@ class UIWindow(Tk):
         self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
         self.info_size[1] = self.window_height - self.editor_size[1]
 
-    def insert_to_console(self, text, source=None, std=None):
+    def insert_to_console(self, text, source=None):
         self.console['state'] = NORMAL
-        self.console['foreground'] = "red"
-        self.console.insert(END, f"{get_current_time()} {text}\n")
-        if self.data_process.stdout:
-            self.console.insert(END, f"{get_current_time()}  - STDOUT:{self.data_process.stdout}", 'error')
+        self.console.insert(END, f"{get_current_time()} [IDE] :: {text}\n")
+        if source == "PEACE":
+            self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stdout}",
+                                "external_message")
             self.data_process.stdout = None
-        if self.data_process.stderr:
-            self.console.insert(END, f"{get_current_time()}  - STDERR:{self.data_process.stderr}", 'error')
+        elif source == "GPSSH":
+            self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
+                                "external_message")
             self.data_process.stderr = None
-        self.console['foreground'] = "black"
+
         self.console['state'] = DISABLED
 
     def update_title(self, gpss=True):
@@ -87,7 +88,7 @@ class UIWindow(Tk):
 
     def compile(self):
         ret_code = self.data_process.compile()
-        self.insert_to_console(" - начало компиляции")
+        self.insert_to_console("начало компиляции", source="PEACE")
         if ret_code == 1:
             messagebox.showerror("Error", "There are some problems with file")
         elif ret_code == 2:
@@ -99,39 +100,40 @@ class UIWindow(Tk):
             self.gpss_text.delete(1.0, END)
             self.gpss_text.insert(1.0, ret_code)
             self.gpss_text['state'] = DISABLED
-            self.insert_to_console(" - текущий .pce файл скомпилирован")
+            self.insert_to_console("текущий .pce файл скомпилирован")
 
     def run_model(self):
         if self.data_process.run_model() == 0:
-            self.insert_to_console(" - запущен .gpss код")
+            self.insert_to_console("запущен .gpss код", source="GPSSH")
             self.open_report()
         else:
             messagebox.showerror("Error!", "There is not current GPSS file.")
 
+    # FixMe: three new lines
     def file_save(self):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
-                " - файл успешно сохранен")
+                "файл успешно сохранен")
             self.changes_in_text_editor = False
             self.update_title(False)
 
     def file_save_as(self):
-        if self.data_process.file_save() == 0:
+        if self.data_process.file_save_as() == 0:
             self.insert_to_console(
-                " - файл сохранен с другим именем")
+                "файл сохранен с другим именем")
             self.changes_in_text_editor = False
             self.update_title()
 
     def file_open(self):
         self.changes_in_text_editor = False
         if self.data_process.file_open() == 0:
-            self.insert_to_console(" - открыт новый файл")
+            self.insert_to_console("открыт новый файл")
             self.changes_in_text_editor = False
             self.update_title()
 
     def file_close(self):
         if self.data_process.file_close() == 0:
-            self.insert_to_console(" - текущий файл закрыт")
+            self.insert_to_console("текущий файл закрыт")
             self.changes_in_text_editor = False
             self.update_title()
 
@@ -162,7 +164,7 @@ class UIWindow(Tk):
     def copy_to_buffer(self):
         code = self.data_process.copy_to_buffer()
         self.clipboard_append(code)
-        self.insert_to_console(" - GPSS код скопирован в буфер обмена")
+        self.insert_to_console("GPSS код скопирован в буфер обмена")
 
     def build_menu(self):
         self.main_menu = Menu(self)
@@ -177,7 +179,7 @@ class UIWindow(Tk):
         self.main_menu.add_cascade(label='File', menu=self.file_menu)
 
     def close_window(self):
-        answer = messagebox.askyesnocancel("Выход из Peace", "Вы действительно хотите выйти?")
+        answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
             if self.changes_in_text_editor is True:
                 answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")

@@ -6,5 +6,3 @@ class ChoosePathWindow(Tk):
 
     def pack(self):
         pass
-
-    def
