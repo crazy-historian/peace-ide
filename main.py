@@ -15,5 +15,6 @@ if __name__ == "__main__":
     window.pack()
 
     window.text_editor.bind("<Key>", window.search_for_update)
+
     window.protocol("WM_DELETE_WINDOW", window.close_window)
     window.mainloop()

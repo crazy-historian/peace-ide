@@ -45,6 +45,7 @@ class UIWindow(Tk):
         # menu widgets
         self.main_menu = Menu(self)
         self.file_menu = Menu(self.main_menu, tearoff=0)
+        self.edit_menu = Menu(self.main_menu, tearoff=0)
 
         # text tags
         self.console.tag_config('external_message', background="white", foreground="red")
@@ -177,6 +178,11 @@ class UIWindow(Tk):
         self.file_menu.add_command(label="Save as...", command=self.file_save_as)
         self.file_menu.add_command(label="Exit", command=self.close_window)
         self.main_menu.add_cascade(label='File', menu=self.file_menu)
+        # edit toolbar
+        self.edit_menu.add_command(label="Copy", command=self.copy)
+        self.edit_menu.add_command(label="Paste", command=self.paste)
+        self.edit_menu.add_command(label="Cut", command=self.cut)
+        self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
 
     def close_window(self):
         answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
@@ -217,7 +223,23 @@ class UIWindow(Tk):
 
     # events in widgets
     def search_for_update(self, event):
-        print(event)
-        if event.char or event.keysum == "BackSpace":
-            self.changes_in_text_editor = True
-            self.update_title()
+        try:
+            if event.char or event.keysum == "BackSpace":
+                self.changes_in_text_editor = True
+                self.update_title()
+        except AttributeError:
+            pass
+
+    def copy(self):
+        self.text_editor.clipboard_clear()
+        try:
+            self.text_editor.clipboard_append(self.text_editor.selection_get())
+        except TclError:
+            pass
+
+    def paste(self):
+        self.text_editor.insert(INSERT, self.text_editor.clipboard_get())
+
+    def cut(self):
+        self.copy()
+        self.text_editor.delete("sel.first", "sel.last")
