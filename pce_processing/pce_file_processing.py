@@ -1,6 +1,5 @@
 import os
 import subprocess
-import tkinter as tk
 from datetime import datetime
 from tkinter import messagebox, filedialog
 from tkinter import END
@@ -124,7 +123,7 @@ class PceFileProcessing:
             return -1
 
     def run_model(self):
-        if self.gpssh_interpreter_path == "None" or os.path.isfile(self.gpssh_interpreter_path):
+        if self.gpssh_interpreter_path == "None" or not os.path.isfile(self.gpssh_interpreter_path):
             self.gpssh_interpreter_path = os.path.normpath(
                 filedialog.askopenfilename(initialdir=".", title="Выбор gpssh.exe файла", defaultextension=".exe"))
             self.ini_process.insert_to_config_file("settings", "gpssh_path", self.gpssh_interpreter_path)

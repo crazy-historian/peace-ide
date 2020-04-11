@@ -1,5 +1,4 @@
-from os import getcwd
-from os.path import isfile, normpath
+from os.path import isfile
 import configparser
 import sys
 
@@ -7,7 +6,6 @@ import sys
 class IniProcessing:
     def __init__(self, path):
         self.path = path
-        print(path)
         self.config_file = configparser.ConfigParser()
         self.create_config_file()
 
@@ -25,7 +23,6 @@ class IniProcessing:
             with open(self.path, "w") as ini_file:
                 self.config_file.write(ini_file)
         else:
-            print("файл был найден")
             self.config_file.read(self.path)
 
     def get_config_file(self):

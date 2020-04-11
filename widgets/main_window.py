@@ -1,15 +1,10 @@
-import os
-import subprocess
-import datetime
 from tkinter import *
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 from widgets.common_widgets import TextWidgetContainer, ScrolledTextWidget
-from settings.ini_processing import IniProcessing
-from pce_processing.pce_file_processing import PceFileProcessing, get_current_time
+from pce_processing.pce_file_processing import get_current_time
 
 
 class UIWindow(Tk):
-
     def __init__(self, data_process=None, ini_process=None):
         # main window object
         super().__init__()
@@ -64,26 +59,29 @@ class UIWindow(Tk):
         self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
         self.info_size[1] = self.window_height - self.editor_size[1]
 
-    def insert_to_console(self, text, stdout=False, stderr=False):
+    def insert_to_console(self, text):
         self.console['state'] = NORMAL
         self.console['foreground'] = "red"
         self.console.insert(END, f"{get_current_time()} {text}\n")
-        if stdout:
-            self.console.insert(END, f"{get_current_time()} {self.data_process.stdout}\n")
+        if self.data_process.stdout:
+            self.console.insert(END, f"{get_current_time()}  - STDOUT:{self.data_process.stdout}")
             self.data_process.stdout = None
-        if stderr:
-            self.console.insert(END, f"{get_current_time()} {self.data_process.stderr}\n")
+        if self.data_process.stderr:
+            self.console.insert(END, f"{get_current_time()}  - STDERR:{self.data_process.stderr}")
             self.data_process.stderr = None
         self.console['foreground'] = "black"
         self.console['state'] = DISABLED
 
-    def update_title(self):
+    def update_title(self, gpss=True):
         if self.changes_in_text_editor:
             self.title(f"Peace *{self.data_process.pce_full_name}")
         else:
             self.title(f"Peace {self.data_process.pce_full_name}")
+        if gpss:
+            self.gpss_text['state'] = NORMAL
+            self.gpss_text.delete(1.0, END)
+            self.gpss_text['state'] = DISABLED
 
-    # event processing
     def compile(self):
         ret_code = self.data_process.compile()
         if ret_code == 1:
@@ -97,11 +95,11 @@ class UIWindow(Tk):
             self.gpss_text.delete(1.0, END)
             self.gpss_text.insert(1.0, ret_code)
             self.gpss_text['state'] = DISABLED
-            self.insert_to_console(" - текущий .pce файл скомпилирован", stdout=True, stderr=True)
+            self.insert_to_console(" - текущий .pce файл скомпилирован")
 
     def run_model(self):
         if self.data_process.run_model() == 0:
-            self.insert_to_console(" -- запущен .gpss код", stdout=True, stderr=True)
+            self.insert_to_console(" - запущен .gpss код")
             self.open_report()
         else:
             messagebox.showerror("Error!", "There is not current GPSS file.")
@@ -111,7 +109,7 @@ class UIWindow(Tk):
             self.insert_to_console(
                 " - файл успешно сохранен")
             self.changes_in_text_editor = False
-            self.update_title()
+            self.update_title(False)
 
     def file_save_as(self):
         if self.data_process.file_save() == 0:
@@ -212,20 +210,3 @@ class UIWindow(Tk):
         self.changes_in_text_editor = True
         self.update_title()
 
-
-if __name__ == "__main__":
-
-    ini_process = IniProcessing(path="settings.ini")
-    window = UIWindow(ini_process=ini_process)
-    data_process = PceFileProcessing(ini_process=ini_process, text_editor=window.text_editor)
-
-    window.ini_process = ini_process
-    window.data_process = data_process
-
-    window.geometry("{}x{}+100+100".format(window.window_width, window.window_height + window.indent * 2))
-    window.resizable(False, False)
-    window.pack()
-
-    window.text_editor.bind("<Key>", window.search_for_update)
-    window.protocol("WM_DELETE_WINDOW", window.close_window)
-    window.mainloop()
