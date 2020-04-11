@@ -52,8 +52,8 @@ class PceFileProcessing:
         ret_code = self.file_save()
         return ret_code
 
-    def file_open(self):
-        if self.file_close() <= 0:
+    def file_open(self, changes):
+        if self.file_close(changes) <= 0:
             file_name = filedialog.askopenfilename(filetypes=[('Peace-code files', '.pce')])
             if file_name:
                 file = open(file_name, 'r')
@@ -64,13 +64,14 @@ class PceFileProcessing:
             else:
                 return 1
 
-    def file_close(self):
+    def file_close(self, changes):
         if self.pce_full_name:
-            answer = messagebox.askyesnocancel("Закрытие .pce файла", "Сохранить текущий файл перед закрытием?")
-            if answer is True:
-                self.file_save()
-            elif answer is None:
-                return 1
+            if changes:
+                answer = messagebox.askyesnocancel("Закрытие .pce файла", "Сохранить текущий файл перед закрытием?")
+                if answer is True:
+                    self.file_save()
+                elif answer is None:
+                    return 1
             self.text_editor.delete(1.0, END)
             self.update_file_info()
             return 0

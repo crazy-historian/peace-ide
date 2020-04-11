@@ -126,13 +126,13 @@ class UIWindow(Tk):
 
     def file_open(self):
         self.changes_in_text_editor = False
-        if self.data_process.file_open() == 0:
+        if self.data_process.file_open(self.changes_in_text_editor) == 0:
             self.insert_to_console("открыт новый файл")
             self.changes_in_text_editor = False
             self.update_title()
 
     def file_close(self):
-        if self.data_process.file_close() == 0:
+        if self.data_process.file_close(self.changes_in_text_editor) == 0:
             self.insert_to_console("текущий файл закрыт")
             self.changes_in_text_editor = False
             self.update_title()
