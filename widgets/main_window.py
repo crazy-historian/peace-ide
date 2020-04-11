@@ -10,7 +10,7 @@ class UIWindow(Tk):
         super().__init__()
         self.data_process = data_process
         self.ini_process = ini_process
-        self.title("Peace. It is a simple and useful IDE for Peace interpreter.")
+        self.title("PeaceStorm. It is a simple and useful IDE for Peace interpreter.")
         self.changes_in_text_editor = False
 
         # data from .ini file
@@ -111,7 +111,7 @@ class UIWindow(Tk):
             messagebox.showerror("Error!", "There is not current GPSS file.")
 
     # FixMe: three new lines
-    def file_save(self, event):
+    def file_save(self, event=None):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
                 "файл успешно сохранен")
