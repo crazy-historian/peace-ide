@@ -149,7 +149,10 @@ class PceFileProcessing:
             return 1
 
     def copy_to_buffer(self):
-        return open(self.gpss_code, "r").read()
+        if self.gpss_code:
+            return open(self.gpss_code, "r").read()
+        else:
+            return None
 
     def open_report(self):
         file = open(self.simulation_report, "r")

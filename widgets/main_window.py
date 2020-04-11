@@ -74,8 +74,9 @@ class UIWindow(Tk):
             self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
                                 "external_message")
             self.data_process.stderr = None
-
-        self.console['state'] = DISABLED
+        self.console.focus()
+        print(self.focus_get())
+        # self.console['state'] = DISABLED
 
     def update_title(self, gpss=True):
         if self.changes_in_text_editor:
@@ -97,6 +98,8 @@ class UIWindow(Tk):
         elif ret_code == -1:
             messagebox.showerror("Error!", "There is no file to compile")
         else:
+            self.changes_in_text_editor = False
+            self.update_title(False)
             self.gpss_text['state'] = NORMAL
             self.gpss_text.delete(1.0, END)
             self.gpss_text.insert(1.0, ret_code)
@@ -164,8 +167,10 @@ class UIWindow(Tk):
 
     def copy_to_buffer(self):
         code = self.data_process.copy_to_buffer()
+        self.text_editor.clipboard_clear()
         self.clipboard_append(code)
-        self.insert_to_console("GPSS код скопирован в буфер обмена")
+        if code:
+            self.insert_to_console("GPSS код скопирован в буфер обмена")
 
     def build_menu(self):
         self.main_menu = Menu(self)
@@ -224,9 +229,10 @@ class UIWindow(Tk):
     # events in widgets
     def search_for_update(self, event):
         try:
-            if event.char or event.keysum == "BackSpace":
-                self.changes_in_text_editor = True
-                self.update_title(False)
+            if event.keysum == "Control_L" or event.state != "Control|Mod1":
+                if event.char or event.keysum == "BackSpace":
+                    self.changes_in_text_editor = True
+                    self.update_title(False)
         except AttributeError:
             pass
 
@@ -246,3 +252,4 @@ class UIWindow(Tk):
     def cut(self):
         self.copy()
         self.text_editor.delete("sel.first", "sel.last")
+
