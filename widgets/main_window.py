@@ -217,5 +217,6 @@ class UIWindow(Tk):
 
     # events in widgets
     def search_for_update(self, event):
-        self.changes_in_text_editor = True
-        self.update_title()
+        if event.char:
+            self.changes_in_text_editor = True
+            self.update_title()
