@@ -111,7 +111,7 @@ class UIWindow(Tk):
             messagebox.showerror("Error!", "There is not current GPSS file.")
 
     # FixMe: three new lines
-    def file_save(self):
+    def file_save(self, event):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
                 "файл успешно сохранен")
@@ -226,9 +226,12 @@ class UIWindow(Tk):
         try:
             if event.char or event.keysum == "BackSpace":
                 self.changes_in_text_editor = True
-                self.update_title()
+                self.update_title(False)
         except AttributeError:
             pass
+
+    def context_menu(self, event):
+        self.edit_menu.post(event.x_root, event.y_root)
 
     def copy(self):
         self.text_editor.clipboard_clear()
