@@ -46,6 +46,9 @@ class UIWindow(Tk):
         self.main_menu = Menu(self)
         self.file_menu = Menu(self.main_menu, tearoff=0)
 
+        # text tags
+        self.console.tag_config('error', background="white", foreground="red")
+
     def correct_window_size(self):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -59,15 +62,15 @@ class UIWindow(Tk):
         self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
         self.info_size[1] = self.window_height - self.editor_size[1]
 
-    def insert_to_console(self, text):
+    def insert_to_console(self, text, source=None, std=None):
         self.console['state'] = NORMAL
         self.console['foreground'] = "red"
         self.console.insert(END, f"{get_current_time()} {text}\n")
         if self.data_process.stdout:
-            self.console.insert(END, f"{get_current_time()}  - STDOUT:{self.data_process.stdout}")
+            self.console.insert(END, f"{get_current_time()}  - STDOUT:{self.data_process.stdout}", 'error')
             self.data_process.stdout = None
         if self.data_process.stderr:
-            self.console.insert(END, f"{get_current_time()}  - STDERR:{self.data_process.stderr}")
+            self.console.insert(END, f"{get_current_time()}  - STDERR:{self.data_process.stderr}", 'error')
             self.data_process.stderr = None
         self.console['foreground'] = "black"
         self.console['state'] = DISABLED
@@ -84,6 +87,7 @@ class UIWindow(Tk):
 
     def compile(self):
         ret_code = self.data_process.compile()
+        self.insert_to_console(" - начало компиляции")
         if ret_code == 1:
             messagebox.showerror("Error", "There are some problems with file")
         elif ret_code == 2:
@@ -136,6 +140,7 @@ class UIWindow(Tk):
             sub_window = Tk()
             sub_window_parameters = "{}x{}+100+100".format(self.window_width, self.window_height + self.indent * 2)
             sub_window.geometry(sub_window_parameters)
+            sub_window.resizable(False, False)
             sub_window.title(f"Simulation report {self.data_process.simulation_report}")
 
             review_container = TextWidgetContainer(sub_window,
@@ -174,12 +179,15 @@ class UIWindow(Tk):
     def close_window(self):
         answer = messagebox.askyesnocancel("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
-            answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
-            if answer is True:
-                self.file_save()
-            elif answer is None:
-                return
-            self.destroy()
+            if self.changes_in_text_editor is True:
+                answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
+                if answer is True:
+                    self.file_save()
+                elif answer is None:
+                    return
+                self.destroy()
+            else:
+                self.destroy()
         else:
             return
 
@@ -209,4 +217,3 @@ class UIWindow(Tk):
     def search_for_update(self, event):
         self.changes_in_text_editor = True
         self.update_title()
-
