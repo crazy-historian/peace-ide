@@ -217,6 +217,7 @@ class UIWindow(Tk):
 
     # events in widgets
     def search_for_update(self, event):
-        if event.char:
+        print(event)
+        if event.char or event.keysum == "BackSpace":
             self.changes_in_text_editor = True
             self.update_title()
