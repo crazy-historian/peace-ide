@@ -74,9 +74,7 @@ class UIWindow(Tk):
             self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
                                 "external_message")
             self.data_process.stderr = None
-        self.console.focus()
-        print(self.focus_get())
-        # self.console['state'] = DISABLED
+        self.console['state'] = DISABLED
 
     def update_title(self, gpss=True):
         if self.changes_in_text_editor:
@@ -229,10 +227,12 @@ class UIWindow(Tk):
     # events in widgets
     def search_for_update(self, event):
         try:
-            if event.keysum == "Control_L" or event.state != "Control|Mod1":
-                if event.char or event.keysum == "BackSpace":
-                    self.changes_in_text_editor = True
-                    self.update_title(False)
+            if event.state == 12 and event.keysym in ('c', 's', 'a'):
+                return
+            elif event.char or event.keysum == "BackSpace":
+                print("перехват")
+                self.changes_in_text_editor = True
+                self.update_title(False)
         except AttributeError:
             pass
 
@@ -252,4 +252,3 @@ class UIWindow(Tk):
     def cut(self):
         self.copy()
         self.text_editor.delete("sel.first", "sel.last")
-
