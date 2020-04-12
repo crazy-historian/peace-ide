@@ -71,9 +71,12 @@ class UIWindow(Tk):
                                 "external_message")
             self.data_process.stdout = None
         elif source == "GPSSH":
-            self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
+            # self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
+            #                     "external_message")
+            self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}\n",
                                 "external_message")
             self.data_process.stderr = None
+        self.console.see(END)
         self.console['state'] = DISABLED
 
     def update_title(self, gpss=True):
@@ -230,7 +233,6 @@ class UIWindow(Tk):
             if event.state == 12 and event.keysym in ('c', 's', 'a'):
                 return
             elif event.char or event.keysum == "BackSpace":
-                print("перехват")
                 self.changes_in_text_editor = True
                 self.update_title(False)
         except AttributeError:
