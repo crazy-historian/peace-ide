@@ -68,17 +68,22 @@ class PceFileProcessing:
         return ret_code
 
     def file_open(self):
-        if self.file_close() != 1:
-            file_name = filedialog.askopenfilename(title="Открытие .pce файла",
-                                                   filetypes=[('Peace-code files', '.pce')])
-            if not file_name:
-                return 1
-            elif not check_path(file_name):
-                # Fixme
-                messagebox.showwarning(f"Warning! {file_name} is incorrect",
-                                       "gpssh.exe doesn't support strings with spaces and no ASCII symbols. "
-                                       "Change directory or file name.")
 
+        file_name = filedialog.askopenfilename(title="Открытие .pce файла",
+                                               filetypes=[('Peace-code files', '.pce')])
+        if not file_name:
+            return 1
+        elif file_name.isascii() is False:
+            messagebox.showwarning(f"Warning! {file_name} is incorrect",
+                                   "gpssh.exe doesn't support strings with no ASCII symbols. "
+                                   "Change directory or file name.")
+            return 1
+        elif ' ' in file_name:
+            messagebox.showwarning(f"Warning! {file_name} is unreliable",
+                                   "gpssh.exe doesn't support strings with spaces in a direct call. "
+                                   "This may lead to problems in the future.")
+
+        if self.file_close() == 0:
             file = open(file_name, 'r')
             self.text_editor.insert(1.0, file.read())
             self.text_editor.mark_set("insert", 1.0)
@@ -86,6 +91,8 @@ class PceFileProcessing:
             self.changes_in_editor = False
             self.update_file_info(file_name)
             return 0
+        else:
+            return 1
 
     def file_close(self):
         if self.changes_in_editor:
