@@ -10,13 +10,10 @@ if __name__ == "__main__":
     window.ini_process = ini_process
     window.data_process = data_process
 
-    window.geometry("{}x{}+100+100".format(window.window_width, window.window_height + window.indent * 2))
+    window.geometry("{}x{}+300+100".format(window.window_width, window.window_height + window.indent * 2))
     window.resizable(False, False)
     window.pack()
-
-    window.text_editor.bind("<Key>", window.search_for_update)
-    window.bind("<Control-s>", window.file_save)
-    window.text_editor.bind("<Button-3>", window.context_menu)
+    window.bind_events()
 
     window.protocol("WM_DELETE_WINDOW", window.close_window)
     window.mainloop()

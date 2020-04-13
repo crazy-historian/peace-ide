@@ -6,10 +6,14 @@ from pce_processing.pce_file_processing import get_current_time
 
 class UIWindow(Tk):
     def __init__(self, data_process=None, ini_process=None):
-        # main window object
+        # tk object
         super().__init__()
+
+        # processing object
         self.data_process = data_process
         self.ini_process = ini_process
+
+        # real-time title
         self.title("PeaceStorm. It is a simple and useful IDE for Peace interpreter.")
         self.changes_in_text_editor = False
 
@@ -28,12 +32,12 @@ class UIWindow(Tk):
         # containers for widgets
         self.editor_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
         self.gpss_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
-        self.info_container = TextWidgetContainer(self, self.info_size, (self.font, self.font_size))
+        self.console_container = TextWidgetContainer(self, self.info_size, (self.font, self.font_size))
 
         # widgets
         self.text_editor = ScrolledTextWidget(self.editor_container, self.editor_size)
         self.gpss_text = ScrolledTextWidget(self.gpss_container, self.editor_size)
-        self.console = ScrolledTextWidget(self.info_container, self.editor_size)
+        self.console = ScrolledTextWidget(self.console_container, self.editor_size)
 
         # buttons
         self.save_button = Button(self.editor_container, text="Save file", command=self.file_save)
@@ -70,41 +74,37 @@ class UIWindow(Tk):
             self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stdout}",
                                 "external_message")
             self.data_process.stdout = None
-        elif source == "GPSSH":
-            # self.console.insert(END, f"{get_current_time()} [{source}] :: проверьте файл отчета о моделировании\n",
-            #                     "external_message")
+        elif source == "GPSSH" and "ERROR" in self.data_process.stderr:
             self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}\n",
                                 "external_message")
             self.data_process.stderr = None
         self.console.see(END)
         self.console['state'] = DISABLED
 
-    def update_title(self, gpss=True):
-        if self.changes_in_text_editor:
+    def update_title(self, gpss=False):
+        if self.data_process.changes_in_editor:
             self.title(f"Peace *{self.data_process.pce_full_name}")
         else:
             self.title(f"Peace {self.data_process.pce_full_name}")
         if gpss:
             self.gpss_text['state'] = NORMAL
             self.gpss_text.delete(1.0, END)
+            if isinstance(gpss, str):
+                self.gpss_text.insert(1.0, gpss)
             self.gpss_text['state'] = DISABLED
 
+    # external commands
     def compile(self):
-        ret_code = self.data_process.compile()
+        returned_code = self.data_process.compile()
         self.insert_to_console("начало компиляции", source="PEACE")
-        if ret_code == 1:
+        if returned_code == 1:
             messagebox.showerror("Error", "There are some problems with file")
-        elif ret_code == 2:
+        elif returned_code == 2:
             messagebox.showerror("Error", "There are some problems with compilation")
-        elif ret_code == -1:
+        elif returned_code == -1:
             messagebox.showerror("Error!", "There is no file to compile")
         else:
-            self.changes_in_text_editor = False
-            self.update_title(False)
-            self.gpss_text['state'] = NORMAL
-            self.gpss_text.delete(1.0, END)
-            self.gpss_text.insert(1.0, ret_code)
-            self.gpss_text['state'] = DISABLED
+            self.update_title(returned_code)
             self.insert_to_console("текущий .pce файл скомпилирован")
 
     def run_model(self):
@@ -119,28 +119,23 @@ class UIWindow(Tk):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
                 "файл успешно сохранен")
-            self.changes_in_text_editor = False
-            self.update_title(False)
+            self.update_title(True)
 
     def file_save_as(self):
         if self.data_process.file_save_as() == 0:
             self.insert_to_console(
                 "файл сохранен с другим именем")
-            self.changes_in_text_editor = False
-            self.update_title()
+        self.update_title(True)
 
     def file_open(self):
-        self.changes_in_text_editor = False
-        if self.data_process.file_open(self.changes_in_text_editor) == 0:
+        if self.data_process.file_open() == 0:
             self.insert_to_console("открыт новый файл")
-            self.changes_in_text_editor = False
-            self.update_title()
+            self.update_title(True)
 
     def file_close(self):
-        if self.data_process.file_close(self.changes_in_text_editor) == 0:
+        if self.data_process.file_close() == 0:
             self.insert_to_console("текущий файл закрыт")
-            self.changes_in_text_editor = False
-            self.update_title()
+            self.update_title(True)
 
     def open_report(self):
         if self.data_process.simulation_report is not None:
@@ -164,7 +159,7 @@ class UIWindow(Tk):
             review_widget['state'] = DISABLED
             sub_window.mainloop()
         else:
-            messagebox.showerror("Error!", "There is not .lis file")
+            messagebox.showerror("Error!", "There is no .lis file")
 
     def copy_to_buffer(self):
         code = self.data_process.copy_to_buffer()
@@ -193,7 +188,7 @@ class UIWindow(Tk):
     def close_window(self):
         answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
-            if self.changes_in_text_editor is True:
+            if self.data_process.changes_in_editor is True:
                 answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
                 if answer is True:
                     self.file_save()
@@ -218,7 +213,7 @@ class UIWindow(Tk):
         self.gpss_text.show(row=0, column=3)
 
     def show_compile_info(self):
-        self.info_container.show(row=2, column=0, indent_x=self.indent, indent_y=self.indent, columnspan=6)
+        self.console_container.show(row=2, column=0, indent_x=self.indent, indent_y=self.indent, columnspan=6)
         self.console.show(row=2, column=0)
 
     def pack(self):
@@ -233,7 +228,7 @@ class UIWindow(Tk):
             if event.state == 12 and event.keysym in ('c', 's', 'a'):
                 return
             elif event.char or event.keysum == "BackSpace":
-                self.changes_in_text_editor = True
+                self.data_process.changes_in_editor = True
                 self.update_title(False)
         except AttributeError:
             pass
@@ -254,3 +249,8 @@ class UIWindow(Tk):
     def cut(self):
         self.copy()
         self.text_editor.delete("sel.first", "sel.last")
+
+    def bind_events(self):
+        self.text_editor.bind("<Key>", self.search_for_update)
+        self.bind("<Control-s>", self.file_save)
+        self.text_editor.bind("<Button-3>", self.context_menu)

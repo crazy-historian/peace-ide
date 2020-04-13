@@ -32,14 +32,14 @@ class PceFileProcessing:
         self.gpss_code = None
         self.simulation_report = None
         self.current_time = None
-        self.changes = False
+        self.changes_in_editor = False
         self.stdout = None
         self.stderr = None
 
     def file_save(self):
         code = self.text_editor.get(1.0, END)
-        self.changes = False
         if self.pce_full_name:
+            self.changes_in_editor = False
             file = open(self.pce_full_name, 'w+')
             file.write(code)
             file.close()
@@ -49,47 +49,58 @@ class PceFileProcessing:
             if not file_name:
                 return 1
             elif not check_path(file_name):
-                messagebox.showwarning(f"Warning! {file_name} is incorrect",
+                messagebox.showwarning(f"Warning! {file_name} is unreliable.",
                                        "gpssh.exe doesn't support strings with spaces and no ASCII symbols. "
                                        "Change directory or file name.")
                 return 1
             file = open(file_name, 'w+')
             file.write(code)
+            self.changes_in_editor = False
             self.update_file_info(file_name)
             return 0
 
     def file_save_as(self):
-        self.update_file_info()
+        temp = self.pce_full_name
+        self.pce_full_name = None
         ret_code = self.file_save()
+        if ret_code == 1:
+            self.pce_full_name = temp
         return ret_code
 
-    def file_open(self, changes):
-        if self.file_close(changes) <= 0:
-            file_name = filedialog.askopenfilename(filetypes=[('Peace-code files', '.pce')])
-            if file_name:
-                file = open(file_name, 'r')
-                self.text_editor.insert(1.0, file.read())
-                file.close()
-                self.update_file_info(file_name)
-                return 0
-            else:
+    def file_open(self):
+        if self.file_close() != 1:
+            file_name = filedialog.askopenfilename(title="Открытие .pce файла",
+                                                   filetypes=[('Peace-code files', '.pce')])
+            if not file_name:
                 return 1
+            elif not check_path(file_name):
+                # Fixme
+                messagebox.showwarning(f"Warning! {file_name} is incorrect",
+                                       "gpssh.exe doesn't support strings with spaces and no ASCII symbols. "
+                                       "Change directory or file name.")
 
-    def file_close(self, changes):
-        if self.pce_full_name:
-            if changes:
-                answer = messagebox.askyesnocancel("Закрытие .pce файла", "Сохранить текущий файл перед закрытием?")
-                if answer is True:
-                    self.file_save()
-                elif answer is None:
-                    return 1
-            self.text_editor.delete(1.0, END)
-            self.update_file_info()
+            file = open(file_name, 'r')
+            self.text_editor.insert(1.0, file.read())
+            self.text_editor.mark_set("insert", 1.0)
+            file.close()
+            self.changes_in_editor = False
+            self.update_file_info(file_name)
             return 0
-        return -1
+
+    def file_close(self):
+        if self.changes_in_editor:
+            answer = messagebox.askyesnocancel("Закрытие .pce файла", "Сохранить текущий файл перед закрытием?")
+            if answer is True:
+                self.file_save()
+            elif answer is None:
+                return 1
+            self.changes_in_editor = False
+        self.text_editor.delete(1.0, END)
+        self.update_file_info()
+        return 0
 
     def update_file_info(self, new_file=None):
-        self.changes = False
+        self.changes_in_editor = False
         if not new_file:
             self.pce_full_name = None
             self.pce_path = None
@@ -121,8 +132,7 @@ class PceFileProcessing:
             self.peace_interpreter_path = os.path.normpath(filedialog.askopenfilename())
             self.ini_process.insert_to_config_file("settings", "peace_core_path", self.peace_interpreter_path)
 
-        if self.pce_full_name:
-            self.file_save()
+        if self.file_save() == 0:
             ret_code = self.execute_external_command(
                 "python", self.peace_interpreter_path, self.pce_full_name)
 
