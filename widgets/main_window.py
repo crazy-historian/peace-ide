@@ -119,13 +119,13 @@ class UIWindow(Tk):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
                 "файл успешно сохранен")
-            self.update_title(True)
+            self.update_title()
 
     def file_save_as(self):
         if self.data_process.file_save_as() == 0:
             self.insert_to_console(
                 "файл сохранен с другим именем")
-        self.update_title(True)
+            self.update_title(True)
 
     def file_open(self):
         if self.data_process.file_open() == 0:
