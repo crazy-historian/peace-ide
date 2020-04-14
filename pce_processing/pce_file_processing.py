@@ -48,11 +48,15 @@ class PceFileProcessing:
             file_name = filedialog.asksaveasfilename(title="Сохранение файла с pce-кодом", defaultextension=".pce")
             if not file_name:
                 return 1
-            elif not check_path(file_name):
-                messagebox.showwarning(f"Warning! {file_name} is unreliable.",
-                                       "gpssh.exe doesn't support strings with spaces and no ASCII symbols. "
+            elif file_name.isascii() is False:
+                messagebox.showwarning(f"Warning! {file_name} is incorrect",
+                                       "gpssh.exe doesn't support strings with no ASCII symbols. "
                                        "Change directory or file name.")
                 return 1
+            elif ' ' in file_name:
+                messagebox.showwarning(f"Warning! {file_name} is unreliable",
+                                       "gpssh.exe doesn't support strings with spaces in a direct call. "
+                                       "This may lead to problems in the future.")
             file = open(file_name, 'w+')
             file.write(code)
             self.changes_in_editor = False
