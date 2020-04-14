@@ -58,8 +58,10 @@ class UIWindow(Tk):
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
 
-        self.window_width = round(screen_width // 2)
-        self.window_height = round(screen_height * (2 / 3))
+        # self.window_width = round(screen_width // 2)
+        # self.window_height = round(screen_height * (2 / 3))
+        self.window_width = 1366
+        self.window_height = 768
 
         self.editor_size[0] = round((self.window_width - self.indent * 4) // 2)
         self.editor_size[1] = round((self.window_height - self.indent * 5) * (2 / 3))
