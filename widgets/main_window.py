@@ -101,7 +101,7 @@ class UIWindow(Tk):
             self.gpss_text['state'] = DISABLED
 
     # external commands
-    def compile(self):
+    def compile(self, event=None):
         returned_code = self.data_process.compile()
         self.insert_to_console("начало компиляции", source="PEACE")
         if returned_code == 1:
@@ -114,7 +114,7 @@ class UIWindow(Tk):
             self.update_title(returned_code)
             self.insert_to_console("текущий .pce файл скомпилирован", tag='successful')
 
-    def run_model(self):
+    def run_model(self, events=None):
         if self.data_process.run_model() == 0:
             self.insert_to_console("запущен .gpss код", source="GPSSH", tag='successful')
             self.open_report()
@@ -260,4 +260,6 @@ class UIWindow(Tk):
     def bind_events(self):
         self.text_editor.bind("<Key>", self.search_for_update)
         self.bind("<Control-s>", self.file_save)
+        self.bind("<F5>", self.compile)
+        self.bind("<F6>", self.run_model)
         self.text_editor.bind("<Button-3>", self.context_menu)
