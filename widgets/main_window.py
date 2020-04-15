@@ -53,6 +53,7 @@ class UIWindow(Tk):
 
         # text tags
         self.console.tag_config('external_message', background="white", foreground="red")
+        self.console.tag_config('successful', background="white", foreground="green")
 
     def correct_window_size(self):
         screen_width = self.winfo_screenwidth()
@@ -69,13 +70,17 @@ class UIWindow(Tk):
         self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
         self.info_size[1] = self.window_height - self.editor_size[1]
 
-    def insert_to_console(self, text, source=None):
+    def insert_to_console(self, text, source=None, tag=None):
         self.console['state'] = NORMAL
-        self.console.insert(END, f"{get_current_time()} [IDE] :: {text}\n")
+        self.console.insert(END, f"{get_current_time()} [IDE] :: {text}\n", tag)
         if source == "PEACE":
-            self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stdout}",
-                                "external_message")
-            self.data_process.stdout = None
+            if self.data_process.stdout:
+                self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stdout}", tag)
+                self.data_process.stdout = None
+            if self.data_process.stderr:
+                self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}",
+                                    'external_message')
+                self.data_process.stderr = None
         elif source == "GPSSH" and "ERROR" in self.data_process.stderr:
             self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}\n",
                                 "external_message")
@@ -107,11 +112,11 @@ class UIWindow(Tk):
             messagebox.showerror("Error!", "There is no file to compile")
         else:
             self.update_title(returned_code)
-            self.insert_to_console("текущий .pce файл скомпилирован")
+            self.insert_to_console("текущий .pce файл скомпилирован", tag='successful')
 
     def run_model(self):
         if self.data_process.run_model() == 0:
-            self.insert_to_console("запущен .gpss код", source="GPSSH")
+            self.insert_to_console("запущен .gpss код", source="GPSSH", tag='successful')
             self.open_report()
         else:
             messagebox.showerror("Error!", "There is not current GPSS file.")
