@@ -140,7 +140,8 @@ class PceFileProcessing:
 
     def compile(self):
         if self.peace_interpreter_path == "None" or not os.path.isfile(self.peace_interpreter_path):
-            self.peace_interpreter_path = os.path.normpath(filedialog.askopenfilename())
+            self.peace_interpreter_path = os.path.normpath(filedialog.askopenfilename(title="Выбор peace-core файла",
+                                                                                      defaultextension=".py"))
             self.ini_process.insert_to_config_file("settings", "peace_core_path", self.peace_interpreter_path)
 
         if self.file_save() == 0:

@@ -16,7 +16,7 @@ class IniProcessing:
             self.path = "settings.ini"
             self.config_file.add_section("settings")
             self.config_file.set("settings", "font", "Consolas")
-            self.config_file.set("settings", "font_size", "12")
+            self.config_file.set("settings", "font_size", "14")
             self.config_file.set("settings", "gpssh_path", "None")
             self.config_file.set("settings", "peace_core_path", "None")
 
