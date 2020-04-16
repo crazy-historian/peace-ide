@@ -190,6 +190,7 @@ class UIWindow(Tk):
         self.edit_menu.add_command(label="Copy", command=self.copy)
         self.edit_menu.add_command(label="Paste", command=self.paste)
         self.edit_menu.add_command(label="Cut", command=self.cut)
+        self.edit_menu.add_command(label="Undo", command=self.data_process.insert_from_stack)
         self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
 
     def close_window(self):
