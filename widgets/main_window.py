@@ -232,10 +232,11 @@ class UIWindow(Tk):
     # events in widgets
     def search_for_update(self, event):
         try:
-            if event.state == 12 and event.keysym in ('c', 's', 'a'):
+            if event.state == 12 and event.keysym in ('c', 's', 'a', 'z'):
                 return
             elif event.char or event.keysum == "BackSpace":
                 self.data_process.changes_in_editor = True
+                self.data_process.append_to_stack()
                 self.update_title(False)
         except AttributeError:
             pass
@@ -259,7 +260,9 @@ class UIWindow(Tk):
 
     def bind_events(self):
         self.text_editor.bind("<Key>", self.search_for_update)
+        self.text_editor.bind("<Button-3>", self.context_menu)
         self.bind("<Control-s>", self.file_save)
+        self.bind("<Control-z>", self.data_process.insert_from_stack)
         self.bind("<F5>", self.compile)
         self.bind("<F6>", self.run_model)
-        self.text_editor.bind("<Button-3>", self.context_menu)
+

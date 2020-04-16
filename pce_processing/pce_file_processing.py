@@ -1,19 +1,13 @@
 import os
 import subprocess
 from datetime import datetime
+from collections import deque
 from tkinter import messagebox, filedialog
-from tkinter import END
+from tkinter import END, INSERT
 
 
 def get_current_time():
     return datetime.now().strftime("%d-%m-%Y %H:%M")
-
-
-def check_path(path):
-    if ' ' in path or not path.isascii():
-        return False
-    else:
-        return True
 
 
 class PceFileProcessing:
@@ -21,6 +15,8 @@ class PceFileProcessing:
 
         self.ini_process = ini_process
         self.text_editor = text_editor
+
+        self.editor_stack = deque()
 
         self.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
         self.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
@@ -40,7 +36,7 @@ class PceFileProcessing:
         code = self.text_editor.get(1.0, END)
         if self.pce_full_name:
             self.changes_in_editor = False
-            file = open(self.pce_full_name, 'w+')
+            file = open(self.pce_full_name, 'w+', encoding='utf-8')
             file.write(code)
             file.close()
             return 0
@@ -57,7 +53,7 @@ class PceFileProcessing:
                 messagebox.showwarning(f"Warning! {file_name} is unreliable",
                                        "gpssh.exe doesn't support strings with spaces in a direct call. "
                                        "This may lead to problems in the future.")
-            file = open(file_name, 'w+')
+            file = open(file_name, 'w+', encoding='utf-8')
             file.write(code)
             self.changes_in_editor = False
             self.update_file_info(file_name)
@@ -72,7 +68,6 @@ class PceFileProcessing:
         return ret_code
 
     def file_open(self):
-
         file_name = filedialog.askopenfilename(title="Открытие .pce файла",
                                                filetypes=[('Peace-code files', '.pce')])
         if not file_name:
@@ -86,10 +81,16 @@ class PceFileProcessing:
             messagebox.showwarning(f"Warning! {file_name} is unreliable",
                                    "gpssh.exe doesn't support strings with spaces in a direct call. "
                                    "This may lead to problems in the future.")
-
         if self.file_close() == 0:
-            file = open(file_name, 'r')
-            self.text_editor.insert(1.0, file.read())
+            try:
+                file = open(file_name, 'r', encoding='utf-8')
+                code = file.read()
+            except UnicodeDecodeError:
+                messagebox.showwarning("Warning!", "There is no UTF-8 file, data may be lost.")
+                file = open(file_name, 'r', encoding='utf-8', errors='ignore')
+                code = file.read()
+
+            self.text_editor.insert(1.0, code)
             self.text_editor.mark_set("insert", 1.0)
             file.close()
             self.changes_in_editor = False
@@ -152,7 +153,7 @@ class PceFileProcessing:
                 return ret_code
             else:
                 self.gpss_code = os.path.normpath(self.get_new_file_name("gpss"))
-                code = open(self.gpss_code, 'r').read()
+                code = open(self.gpss_code, 'r', encoding='utf-8').read()
                 return code
         else:
             return -1
@@ -172,12 +173,26 @@ class PceFileProcessing:
 
     def copy_to_buffer(self):
         if self.gpss_code:
-            return open(self.gpss_code, "r").read()
+            return open(self.gpss_code, "r", encoding='utf-8').read()
         else:
             return None
 
     def open_report(self):
-        file = open(self.simulation_report, "r")
+        file = open(self.simulation_report, "r", encoding='utf-8')
         report_text = file.read()
         file.close()
         return report_text
+
+    def append_to_stack(self):
+        if len(self.editor_stack) > 15:
+            self.editor_stack.pop()
+        text = self.text_editor.get(1.0, END)
+        cursor_position = self.text_editor.index(INSERT)
+        self.editor_stack.append((text, cursor_position))
+
+    def insert_from_stack(self, event=None):
+        if len(self.editor_stack) != 0:
+            old_text = self.editor_stack.pop()
+            self.text_editor.delete(1.0, END)
+            self.text_editor.insert(1.0, old_text[0])
+            self.text_editor.mark_set("insert", old_text[1])
