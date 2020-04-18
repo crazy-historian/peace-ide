@@ -34,7 +34,8 @@ class ScrolledTextWidget(Text):
         self.parent_widget = parent_widget
         self.text_scrollbar = Scrollbar(parent_widget, orient="vertical", command=self.yview)
         super().__init__(parent_widget, width=sizes[0], height=sizes[1], borderwidth=1, relief=GROOVE,
-                         font=parent_widget.font, tabs=40)
+                         font=parent_widget.font, tabs=40, undo=True)
+        self.edit_modified(False)
 
     def show(self, row, column):
         disp = 0

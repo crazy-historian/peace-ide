@@ -1,9 +1,8 @@
 import os
 import subprocess
 from datetime import datetime
-from collections import deque
 from tkinter import messagebox, filedialog
-from tkinter import END, INSERT
+from tkinter import END
 
 
 def get_current_time():
@@ -16,8 +15,6 @@ class PceFileProcessing:
         self.ini_process = ini_process
         self.text_editor = text_editor
 
-        self.editor_stack = deque()
-
         self.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
         self.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
 
@@ -28,17 +25,17 @@ class PceFileProcessing:
         self.gpss_code = None
         self.simulation_report = None
         self.current_time = None
-        self.changes_in_editor = False
         self.stdout = None
         self.stderr = None
 
     def file_save(self):
         code = self.text_editor.get(1.0, END)
         if self.pce_full_name:
-            self.changes_in_editor = False
             file = open(self.pce_full_name, 'w+', encoding='utf-8')
             file.write(code)
             file.close()
+            self.text_editor.edit_reset()
+            self.text_editor.edit_modified(False)
             return 0
         else:
             file_name = filedialog.asksaveasfilename(title="Сохранение файла с pce-кодом", defaultextension=".pce")
@@ -55,7 +52,6 @@ class PceFileProcessing:
                                        "This may lead to problems in the future.")
             file = open(file_name, 'w+', encoding='utf-8')
             file.write(code)
-            self.changes_in_editor = False
             self.update_file_info(file_name)
             return 0
 
@@ -92,27 +88,27 @@ class PceFileProcessing:
 
             self.text_editor.insert(1.0, code)
             self.text_editor.mark_set("insert", 1.0)
+            self.text_editor.edit_reset()
             file.close()
-            self.changes_in_editor = False
             self.update_file_info(file_name)
             return 0
         else:
             return 1
 
     def file_close(self):
-        if self.changes_in_editor:
+        if self.text_editor.edit_modified():
             answer = messagebox.askyesnocancel("Закрытие .pce файла", "Сохранить текущий файл перед закрытием?")
             if answer is True:
                 self.file_save()
             elif answer is None:
                 return 1
-            self.changes_in_editor = False
         self.text_editor.delete(1.0, END)
+        self.text_editor.edit_reset()
         self.update_file_info()
         return 0
 
     def update_file_info(self, new_file=None):
-        self.changes_in_editor = False
+        self.text_editor.edit_modified(False)
         if not new_file:
             self.pce_full_name = None
             self.pce_path = None
@@ -143,6 +139,7 @@ class PceFileProcessing:
         if self.peace_interpreter_path == "None" or not os.path.isfile(self.peace_interpreter_path):
             self.peace_interpreter_path = os.path.normpath(filedialog.askopenfilename(title="Выбор peace-core файла",
                                                                                       defaultextension=".py"))
+            # self.peace_interpreter_path = f"\'{self.peace_interpreter_path}\'"
             self.ini_process.insert_to_config_file("settings", "peace_core_path", self.peace_interpreter_path)
 
         if self.file_save() == 0:
@@ -162,6 +159,7 @@ class PceFileProcessing:
         if self.gpssh_interpreter_path == "None" or not os.path.isfile(self.gpssh_interpreter_path):
             self.gpssh_interpreter_path = os.path.normpath(
                 filedialog.askopenfilename(initialdir=".", title="Выбор gpssh.exe файла", defaultextension=".exe"))
+            # self.gpssh_interpreter_path = f"\"{self.gpssh_interpreter_path}\""
             self.ini_process.insert_to_config_file("settings", "gpssh_path", self.gpssh_interpreter_path)
 
         if self.gpss_code:
@@ -182,17 +180,3 @@ class PceFileProcessing:
         report_text = file.read()
         file.close()
         return report_text
-
-    def append_to_stack(self):
-        if len(self.editor_stack) > 15:
-            self.editor_stack.pop()
-        text = self.text_editor.get(1.0, END)
-        cursor_position = self.text_editor.index(INSERT)
-        self.editor_stack.append((text, cursor_position))
-
-    def insert_from_stack(self, event=None):
-        if len(self.editor_stack) != 0:
-            old_text = self.editor_stack.pop()
-            self.text_editor.delete(1.0, END)
-            self.text_editor.insert(1.0, old_text[0])
-            self.text_editor.mark_set("insert", old_text[1])

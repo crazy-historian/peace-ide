@@ -88,8 +88,12 @@ class UIWindow(Tk):
         self.console.see(END)
         self.console['state'] = DISABLED
 
-    def update_title(self, gpss=False):
-        if self.data_process.changes_in_editor:
+    def insert_separator(self, event):
+        if event.char or event.keysym == "Backspace":
+            self.text_editor.edit_separator()
+
+    def update_title(self, event=None, gpss=False):
+        if self.text_editor.edit_modified():
             self.title(f"Peace *{self.data_process.pce_full_name}")
         else:
             self.title(f"Peace {self.data_process.pce_full_name}")
@@ -111,7 +115,7 @@ class UIWindow(Tk):
         elif returned_code == -1:
             messagebox.showerror("Error!", "There is no file to compile")
         else:
-            self.update_title(returned_code)
+            self.update_title(gpss=returned_code)
             self.insert_to_console("текущий .pce файл скомпилирован", tag='successful')
 
     def run_model(self, events=None):
@@ -121,7 +125,6 @@ class UIWindow(Tk):
         else:
             messagebox.showerror("Error!", "There is not current GPSS file.")
 
-    # FixMe: three new lines
     def file_save(self, event=None):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
@@ -132,17 +135,17 @@ class UIWindow(Tk):
         if self.data_process.file_save_as() == 0:
             self.insert_to_console(
                 "файл сохранен с другим именем")
-            self.update_title(True)
+            self.update_title(gpss=True)
 
     def file_open(self):
         if self.data_process.file_open() == 0:
             self.insert_to_console("открыт новый файл")
-            self.update_title(True)
+            self.update_title(gpss=True)
 
     def file_close(self):
         if self.data_process.file_close() == 0:
             self.insert_to_console("текущий файл закрыт")
-            self.update_title(True)
+            self.update_title(gpss=True)
 
     def open_report(self):
         if self.data_process.simulation_report is not None:
@@ -190,13 +193,15 @@ class UIWindow(Tk):
         self.edit_menu.add_command(label="Copy", command=self.copy)
         self.edit_menu.add_command(label="Paste", command=self.paste)
         self.edit_menu.add_command(label="Cut", command=self.cut)
-        self.edit_menu.add_command(label="Undo", command=self.data_process.insert_from_stack)
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label="Undo", command=self.undo)
+        self.edit_menu.add_command(label="Redo", command=self.redo)
         self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
 
     def close_window(self):
         answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
-            if self.data_process.changes_in_editor is True:
+            if self.text_editor.edit_modified():
                 answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
                 if answer is True:
                     self.file_save()
@@ -231,17 +236,6 @@ class UIWindow(Tk):
         self.show_compile_info()
 
     # events in widgets
-    def search_for_update(self, event):
-        try:
-            if event.state == 12 and event.keysym in ('c', 's', 'a', 'z'):
-                return
-            elif event.char or event.keysum == "BackSpace":
-                self.data_process.changes_in_editor = True
-                self.data_process.append_to_stack()
-                self.update_title(False)
-        except AttributeError:
-            pass
-
     def context_menu(self, event):
         self.edit_menu.post(event.x_root, event.y_root)
 
@@ -259,11 +253,21 @@ class UIWindow(Tk):
         self.copy()
         self.text_editor.delete("sel.first", "sel.last")
 
+    def undo(self, event=None):
+        self.text_editor.edit_undo()
+
+    def redo(self, event=None):
+        try:
+            self.text_editor.edit_redo()
+        except TclError as error:
+            if str(error) == "nothing to redo":
+                pass
+
     def bind_events(self):
-        self.text_editor.bind("<Key>", self.search_for_update)
+        self.text_editor.bind("<<Modified>>", self.update_title)
+        self.text_editor.bind("<Key>", self.insert_separator)
         self.text_editor.bind("<Button-3>", self.context_menu)
+        self.text_editor.bind("<Control-x>", self.redo)
         self.bind("<Control-s>", self.file_save)
-        self.bind("<Control-z>", self.data_process.insert_from_stack)
         self.bind("<F5>", self.compile)
         self.bind("<F6>", self.run_model)
-

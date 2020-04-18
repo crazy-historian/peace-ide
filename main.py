@@ -1,6 +1,7 @@
 from settings.ini_processing import IniProcessing
 from pce_processing.pce_file_processing import PceFileProcessing
 from widgets.main_window import UIWindow
+from tkinter import TclError
 
 if __name__ == "__main__":
     ini_process = IniProcessing(path="settings.ini")
@@ -17,3 +18,4 @@ if __name__ == "__main__":
 
     window.protocol("WM_DELETE_WINDOW", window.close_window)
     window.mainloop()
+
