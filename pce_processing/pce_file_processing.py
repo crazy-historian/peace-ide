@@ -6,7 +6,7 @@ from tkinter import END
 
 
 def get_current_time():
-    return datetime.now().strftime("%d-%m-%Y %H:%M")
+    return datetime.now().strftime("%H:%M:%S")
 
 
 class PceFileProcessing:
@@ -86,12 +86,18 @@ class PceFileProcessing:
                 file = open(file_name, 'r', encoding='utf-8', errors='ignore')
                 code = file.read()
 
+            self.update_file_info(file_name)
             self.text_editor.insert(1.0, code)
             self.text_editor.mark_set("insert", 1.0)
             self.text_editor.edit_reset()
+
+            related_gpss_file = os.path.normpath(self.get_new_file_name("gpss"))
+            code = 0
+            if os.path.isfile(related_gpss_file):
+                self.gpss_code = related_gpss_file
+                code = open(self.gpss_code, 'r').read()
             file.close()
-            self.update_file_info(file_name)
-            return 0
+            return code
         else:
             return 1
 

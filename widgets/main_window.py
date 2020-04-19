@@ -138,11 +138,16 @@ class UIWindow(Tk):
             self.update_title(gpss=True)
 
     def file_open(self):
-        if self.data_process.file_open() == 0:
+        returned_code = self.data_process.file_open()
+        if returned_code != 1:
             self.insert_to_console("открыт новый файл")
-            self.update_title(gpss=True)
+            if isinstance(returned_code, str):
+                self.update_title(gpss=returned_code)
+            else:
+                self.update_title(gpss=True)
 
     def file_close(self):
+        self.data_process.file_close()
         if self.data_process.file_close() == 0:
             self.insert_to_console("текущий файл закрыт")
             self.update_title(gpss=True)
