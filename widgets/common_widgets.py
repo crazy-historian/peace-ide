@@ -1,5 +1,6 @@
 from tkinter import Frame, Text, Scrollbar
 from tkinter import GROOVE
+import tkinter.ttk as ttk
 
 
 class TextWidgetContainer(Frame):
