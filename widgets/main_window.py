@@ -27,7 +27,7 @@ class UIWindow(Tk):
         self.info_size = [0, 0]
         self.window_width = 0
         self.window_height = 0
-        self.correct_window_size()
+        self.correct_window_size(1366, 768)
 
         # containers for widgets
         self.editor_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
@@ -55,14 +55,16 @@ class UIWindow(Tk):
         self.console.tag_config('external_message', background="white", foreground="red")
         self.console.tag_config('successful', background="white", foreground="green")
 
-    def correct_window_size(self):
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
+    def correct_window_size(self, width, height):
+        # screen_width = self.winfo_screenwidth()
+        # screen_height = self.winfo_screenheight()
 
         # self.window_width = round(screen_width // 2)
         # self.window_height = round(screen_height * (2 / 3))
-        self.window_width = 1366
-        self.window_height = 768
+        # self.window_width = 1366
+        # self.window_height = 768
+        self.window_width = width
+        self.window_height = height
 
         self.editor_size[0] = round((self.window_width - self.indent * 4) // 2)
         self.editor_size[1] = round((self.window_height - self.indent * 5) * (2 / 3))
@@ -82,7 +84,7 @@ class UIWindow(Tk):
                                     'external_message')
                 self.data_process.stderr = None
         elif source == "GPSSH" and "ERROR" in self.data_process.stderr:
-            self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}\n",
+            self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stderr}\n",
                                 "external_message")
             self.data_process.stderr = None
         self.console.see(END)

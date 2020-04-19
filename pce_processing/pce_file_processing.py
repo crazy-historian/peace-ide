@@ -92,10 +92,15 @@ class PceFileProcessing:
             self.text_editor.edit_reset()
 
             related_gpss_file = os.path.normpath(self.get_new_file_name("gpss"))
+            related_report_file = os.path.normpath(self.get_new_file_name("lis"))
             code = 0
             if os.path.isfile(related_gpss_file):
                 self.gpss_code = related_gpss_file
                 code = open(self.gpss_code, 'r').read()
+
+            if os.path.isfile(related_report_file):
+                self.simulation_report = related_report_file
+
             file.close()
             return code
         else:
