@@ -1,6 +1,8 @@
 from tkinter import Frame, Text, Scrollbar
 from tkinter import GROOVE
+import tkinter as tk
 import tkinter.ttk as ttk
+import tkinter.scrolledtext as scrtxt
 
 
 class TextWidgetContainer(Frame):
@@ -54,3 +56,9 @@ class ScrolledTextWidget(Text):
         self.grid(row=row + disp, column=column, columnspan=columnspan)
         self.text_scrollbar.grid(row=row, column=(column + columnspan), rowspan=rowspan, sticky='ns')
         self.config(yscrollcommand=self.text_scrollbar.set)
+
+
+if __name__ == "__main__":
+    win = tk.Tk()
+    text = scrtxt()
+    win.mainloop()
