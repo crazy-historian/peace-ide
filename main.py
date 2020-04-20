@@ -7,7 +7,7 @@ from tkinter import TclError
 if __name__ == "__main__":
     ini_process = IniProcessing(path="settings.ini")
     window = UIWindow(ini_process=ini_process)
-    data_process = PceFileProcessing(ini_process=ini_process, text_editor=window.text_editor)
+    data_process = PceFileProcessing(ini_process=ini_process, text_editor=window.file_text)
 
     window.ini_process = ini_process
     window.data_process = data_process
