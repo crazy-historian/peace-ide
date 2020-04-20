@@ -231,6 +231,7 @@ class UIWindow(Tk):
         self.gpss_container.add_buttons([self.run_button, self.copy_button, self.open_report_button])
         self.gpss_container.show(row=0, column=3, indent_x=self.indent)
         self.gpss_text.show(row=0, column=3)
+        self.gpss_text['state'] = DISABLED
 
     def show_compile_info(self):
         self.console_container.show(row=2, column=0, indent_x=self.indent, indent_y=self.indent, columnspan=6)
