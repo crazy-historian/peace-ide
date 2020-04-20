@@ -1,6 +1,6 @@
 from tkinter import *
 from tkinter import messagebox
-from widgets.common_widgets import TextWidgetContainer, ScrolledTextWidget
+from widgets.common_widgets import  ScrolledTextWidget
 from pce_processing.pce_file_processing import get_current_time
 
 
@@ -27,24 +27,11 @@ class UIWindow(Tk):
         self.info_size = [0, 0]
         self.window_width = 0
         self.window_height = 0
-        self.correct_window_size(1366, 768)
-
-        # containers for widgets
-        self.editor_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
-        self.gpss_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
-        self.console_container = TextWidgetContainer(self, self.info_size, (self.font, self.font_size))
 
         # widgets
-        self.text_editor = ScrolledTextWidget(self.editor_container, self.editor_size)
-        self.gpss_text = ScrolledTextWidget(self.gpss_container, self.editor_size)
-        self.console = ScrolledTextWidget(self.console_container, self.editor_size)
-
-        # buttons
-        self.save_button = Button(self.editor_container, text="Save file", command=self.file_save)
-        self.compile_button = Button(self.editor_container, text="Compile", command=self.compile)
-        self.copy_button = Button(self.gpss_container, text="Copy to buffer", command=self.copy_to_buffer)
-        self.run_button = Button(self.gpss_container, text="Run model", command=self.run_model)
-        self.open_report_button = Button(self.gpss_container, text="Open review", command=self.open_report)
+        self.text_editor = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.gpss_text = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.console = ScrolledTextWidget(self, (self.font, self.font_size))
 
         # menu widgets
         self.main_menu = Menu(self)
@@ -54,23 +41,6 @@ class UIWindow(Tk):
         # text tags
         self.console.tag_config('external_message', background="white", foreground="red")
         self.console.tag_config('successful', background="white", foreground="green")
-
-    def correct_window_size(self, width, height):
-        # screen_width = self.winfo_screenwidth()
-        # screen_height = self.winfo_screenheight()
-
-        # self.window_width = round(screen_width // 2)
-        # self.window_height = round(screen_height * (2 / 3))
-        # self.window_width = 1366
-        # self.window_height = 768
-        self.window_width = width
-        self.window_height = height
-
-        self.editor_size[0] = round((self.window_width - self.indent * 4) // 2)
-        self.editor_size[1] = round((self.window_height - self.indent * 5) * (2 / 3))
-
-        self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
-        self.info_size[1] = self.window_height - self.editor_size[1]
 
     def insert_to_console(self, text, source=None, tag=None):
         self.console['state'] = NORMAL
@@ -220,27 +190,11 @@ class UIWindow(Tk):
         else:
             return
 
-    def show_text_editor(self):
-        # text editor
-        self.editor_container.add_buttons([self.compile_button, self.save_button])
-        self.editor_container.show(row=0, column=0, indent_x=self.indent)
-        self.text_editor.show(row=0, column=0)
-
-    def show_gpss_label(self):
-        # gpss code
-        self.gpss_container.add_buttons([self.run_button, self.copy_button, self.open_report_button])
-        self.gpss_container.show(row=0, column=3, indent_x=self.indent)
-        self.gpss_text.show(row=0, column=3)
-
-    def show_compile_info(self):
-        self.console_container.show(row=2, column=0, indent_x=self.indent, indent_y=self.indent, columnspan=6)
-        self.console.show(row=2, column=0)
-
-    def pack(self):
+    def show(self):
         self.build_menu()
-        self.show_text_editor()
-        self.show_gpss_label()
-        self.show_compile_info()
+        self.text_editor.place(relx=0, rely=0, relw=0.6, relh=0.7)
+        self.gpss_text.place(relx=0.6, rely=0, relw=0.4, relh=0.7)
+        self.console.place(relx=0, rely=0.7, relw=1, relh=0.3)
 
     # events in widgets
     def context_menu(self, event):

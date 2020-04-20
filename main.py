@@ -12,10 +12,8 @@ if __name__ == "__main__":
     window.ini_process = ini_process
     window.data_process = data_process
     window.bind_events()
-    window.resizable(False, False)
-
-    window.geometry("{}x{}+300+100".format(window.window_width, window.window_height + window.indent * 2))
-    window.pack()
+    window.geometry("1366x768+300+100")
+    window.show()
     window.protocol("WM_DELETE_WINDOW", window.close_window)
     window.mainloop()
 
