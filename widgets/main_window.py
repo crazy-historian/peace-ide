@@ -232,18 +232,11 @@ class UIWindow(Tk):
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
 
-
-    def show_gpss_label(self):
-        # gpss code
-        self.gpss_container.add_buttons([self.run_button, self.copy_button, self.open_report_button])
-        self.gpss_container.show(row=0, column=3, indent_x=self.indent)
-        self.gpss_text.show(row=0, column=3)
-        self.gpss_text['state'] = DISABLED
-
     def show(self):
         self.build_menu()
         self.file_text.place(relx=0, rely=0, relw=0.6, relh=0.7)
         self.gpss_text.place(relx=0.6, rely=0, relw=0.4, relh=0.7)
+        self.gpss_text['state'] = DISABLED
         self.console.place(relx=0, rely=0.7, relw=1, relh=0.3)
 
     # events in widgets
