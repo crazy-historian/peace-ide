@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from widgets.common_widgets import ScrolledTextWidget
 from pce_processing.pce_file_processing import get_current_time
+from settings_widgets import SettingsWindow
 
 
 class UIWindow(Tk):
@@ -32,11 +33,16 @@ class UIWindow(Tk):
         self.report_panel = None
         self.num_of_tubs = 0
 
+        # settings
+        self.settings = None
+
         # menu widgets
         self.main_menu = Menu(self)
         self.file_menu = Menu(self.main_menu, tearoff=0)
         self.edit_menu = Menu(self.main_menu, tearoff=0)
+        self.run_menu = Menu(self.main_menu, tearoff=0)
         self.gpss_menu = Menu(self.main_menu, tearoff=0)
+        self.settings_menu = Menu(self.main_menu, tearoff=0)
 
         # text tags
         self.console.tag_config('external_message', background="white", foreground="red")
@@ -112,6 +118,7 @@ class UIWindow(Tk):
     def file_open(self):
         returned_code = self.data_process.file_open()
         if returned_code != 1:
+            self.file_text.edit_modified(False)
             self.insert_to_console("открыт новый файл")
             if isinstance(returned_code, str):
                 self.update_title(gpss=returned_code)
@@ -129,6 +136,18 @@ class UIWindow(Tk):
         self.report_window = None
         self.report_panel = None
 
+    def apply_settings_changes(self):
+        self.data_process.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
+        self.data_process.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
+        self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
+
+        self.file_text.configure(font=(self.font, self.font_size))
+        self.gpss_text.configure(font=(self.font, self.font_size))
+        self.console.configure(font=(self.font, self.font_size))
+
+        self.settings.destroy()
+        self.settings = None
+
     def open_report(self):
         if self.data_process.simulation_report is not None:
             if self.report_window is None:
@@ -142,6 +161,7 @@ class UIWindow(Tk):
             self.report_panel.add(report, text=f"[{get_current_time()}]  {self.data_process.common_name}")
             self.report_panel.pack(expand=1, fill='both')
             self.report_window.protocol("WM_DELETE_WINDOW", self.change_report_status)
+            self.report_window.deiconify()
             self.report_window.mainloop()
         else:
             messagebox.showerror("Error!", "There is no .lis file")
@@ -153,6 +173,12 @@ class UIWindow(Tk):
         if code:
             self.insert_to_console("GPSS код скопирован в буфер обмена")
 
+    def open_settings(self):
+        if self.settings is None:
+            self.settings = SettingsWindow(self.ini_process, self.apply_settings_changes)
+        self.settings.protocol("WM_DELETE_WINDOW", self.apply_settings_changes)
+        self.settings.show()
+
     def build_menu(self):
         self.main_menu = Menu(self)
         self.config(menu=self.main_menu)
@@ -162,8 +188,6 @@ class UIWindow(Tk):
         self.file_menu.add_command(label="Close file", command=self.file_close)
         self.file_menu.add_command(label="Save file ", command=self.file_save)
         self.file_menu.add_command(label="Save file as...", command=self.file_save_as)
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Compile", command=self.file_save_as)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Exit", command=self.close_window)
         self.main_menu.add_cascade(label='File', menu=self.file_menu)
@@ -175,13 +199,23 @@ class UIWindow(Tk):
         self.edit_menu.add_command(label="Undo", command=self.undo)
         self.edit_menu.add_command(label="Redo", command=self.redo)
         self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
+        # run toolbar
+        self.run_menu.add_command(label="Compile", command=self.compile)
+        self.run_menu.add_command(label="Run model", command=self.run_model)
+        self.run_menu.add_command(label="Open report", command=self.open_report)
+        self.main_menu.add_cascade(label='Run', menu=self.run_menu)
+        # settings toolbar
+        self.settings_menu.add_command(label="Open settings", command=self.open_settings)
+        self.main_menu.add_cascade(label="Settings", menu=self.settings_menu)
         # gpss toolbar
-        self.gpss_menu.add_command(label="Copy to buffer", command=self.copy_to_buffer)
-        self.gpss_menu.add_command(label="Run model", command=self.run_model)
-        self.gpss_menu.add_command(label="Open report", command=self.open_report)
-        self.main_menu.add_cascade(label='GPSS', menu=self.gpss_menu)
+        self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
 
     def close_window(self):
+        if self.settings:
+            self.settings.destroy()
+        if self.report_window:
+            self.report_window.destroy()
+
         answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
             if self.file_text.edit_modified():
