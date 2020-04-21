@@ -48,6 +48,7 @@ class UIWindow(Tk):
         self.console.tag_config('external_message', background="white", foreground="red")
         self.console.tag_config('successful', background="white", foreground="green")
 
+    # FixMe: refactor
     def insert_to_console(self, text, source=None, tag=None):
         self.console['state'] = NORMAL
         self.console.insert(END, f"{get_current_time()} [IDE] :: {text}\n", tag)
@@ -59,10 +60,20 @@ class UIWindow(Tk):
                 self.console.insert(END, f"{get_current_time()} [{source}] :: {self.data_process.stderr}",
                                     'external_message')
                 self.data_process.stderr = None
+
         elif source == "GPSSH" and "ERROR" in self.data_process.stderr:
             self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stderr}\n",
                                 "external_message")
-            self.data_process.stderr = None
+        elif source == "GIT":
+            if not "Already up to date" in self.data_process.stdout:
+                self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stdout}")
+                self.data_process.stdout = None
+                return 1
+            if self.data_process.stderr:
+                self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stderr}\n",
+                                    "external_message")
+                self.data_process.stderr = None
+
         self.console.see(END)
         self.console['state'] = DISABLED
 
@@ -102,6 +113,19 @@ class UIWindow(Tk):
             self.open_report()
         else:
             messagebox.showerror("Error!", "There is not current GPSS file.")
+
+    def update_ide(self):
+        code = self.data_process.execute_external_command("git", "pull")
+        update = self.insert_to_console("поиск обновлений", source="GIT")
+        if code == 0:
+            if update == 1:
+                self.insert_to_console("приложение обновлено", source="GIT", tag='successful')
+                messagebox.showinfo("Restart IDE", "To apply changes you have to restart IDE")
+                exit()
+            else:
+                messagebox.showinfo("Updates", "No IDE updates")
+        else:
+            messagebox.showerror("Error!", "Some problem with update or git")
 
     def file_save(self, event=None):
         if self.data_process.file_save() == 0:
@@ -152,6 +176,7 @@ class UIWindow(Tk):
         else:
             return
 
+    # window closing
     def close_report_window(self):
         self.report_window.destroy()
         self.report_window = None
@@ -169,8 +194,9 @@ class UIWindow(Tk):
         self.file_text.configure(font=(self.font, self.font_size))
         self.gpss_text.configure(font=(self.font, self.font_size))
         self.console.configure(font=(self.font, self.font_size))
+        self.close_settings_window()
 
-    def open_report(self):
+    def open_report(self, event=None):
         if self.data_process.simulation_report is not None:
             if self.report_window is None:
                 self.report_window = Tk()
@@ -205,29 +231,30 @@ class UIWindow(Tk):
         self.main_menu = Menu(self)
         self.config(menu=self.main_menu)
         # file toolbar
-        self.file_menu.add_command(label="New file", command=self.file_close)
-        self.file_menu.add_command(label="Open file", command=self.file_open)
-        self.file_menu.add_command(label="Close file", command=self.file_close)
-        self.file_menu.add_command(label="Save file ", command=self.file_save)
+        self.file_menu.add_command(label="New file          Ctrl-N", command=self.file_close)
+        self.file_menu.add_command(label="Open file        Ctrl-O", command=self.file_open)
+        self.file_menu.add_command(label="Close file        Ctrl-Q", command=self.file_close)
+        self.file_menu.add_command(label="Save file          Ctrl-S", command=self.file_save)
         self.file_menu.add_command(label="Save file as...", command=self.file_save_as)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Exit", command=self.close_window)
+        self.file_menu.add_command(label="Exit                  Alt-F4", command=self.close_window)
         self.main_menu.add_cascade(label='File', menu=self.file_menu)
         # edit toolbar
-        self.edit_menu.add_command(label="Copy", command=self.copy)
-        self.edit_menu.add_command(label="Paste", command=self.paste)
-        self.edit_menu.add_command(label="Cut", command=self.cut)
+        self.edit_menu.add_command(label="Copy              Ctrl-C", command=self.copy)
+        self.edit_menu.add_command(label="Paste              Ctrl-V", command=self.paste)
+        self.edit_menu.add_command(label="Cut                 Ctrl-X", command=self.cut)
         self.edit_menu.add_separator()
-        self.edit_menu.add_command(label="Undo", command=self.undo)
-        self.edit_menu.add_command(label="Redo", command=self.redo)
+        self.edit_menu.add_command(label="Undo              Ctrl-Z", command=self.undo)
+        self.edit_menu.add_command(label="Redo               Ctrl-R", command=self.redo)
         self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
         # run toolbar
-        self.run_menu.add_command(label="Compile", command=self.compile)
-        self.run_menu.add_command(label="Run model", command=self.run_model)
-        self.run_menu.add_command(label="Open report", command=self.open_report)
+        self.run_menu.add_command(label="Compile              F5", command=self.compile)
+        self.run_menu.add_command(label="Run model          F6", command=self.run_model)
+        self.run_menu.add_command(label="Open report        F7", command=self.open_report)
         self.main_menu.add_cascade(label='Run', menu=self.run_menu)
         # settings toolbar
         self.settings_menu.add_command(label="Open settings", command=self.open_settings)
+        self.settings_menu.add_command(label="Update IDE", command=self.update_ide)
         self.main_menu.add_cascade(label="Settings", menu=self.settings_menu)
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
@@ -275,7 +302,14 @@ class UIWindow(Tk):
         self.file_text.bind("<Key>", self.insert_separator)
         self.file_text.bind("<Button-3>", self.context_file_menu)
         self.gpss_text.bind("<Button-3>", self.context_gpss_menu)
-        self.file_text.bind("<Control-x>", self.redo)
+
+        self.bind("<Control-n>", self.file_close)
+        self.bind("<Control-o>", self.file_open)
+        self.bind("<Control-q>", self.file_close)
         self.bind("<Control-s>", self.file_save)
+
+        self.file_text.bind("<Control-r>", self.redo)
+
         self.bind("<F5>", self.compile)
         self.bind("<F6>", self.run_model)
+        self.bind("<F7>", self.open_report)
