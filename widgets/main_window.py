@@ -131,10 +131,35 @@ class UIWindow(Tk):
             self.insert_to_console("текущий файл закрыт")
             self.update_title(gpss=True)
 
-    def change_report_status(self):
+    # window closing
+    def close_window(self):
+        if self.settings:
+            self.settings.destroy()
+        if self.report_window:
+            self.report_window.destroy()
+
+        answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
+        if answer is True:
+            if self.file_text.edit_modified():
+                answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
+                if answer is True:
+                    self.file_save()
+                elif answer is None:
+                    return
+                self.destroy()
+            else:
+                self.destroy()
+        else:
+            return
+
+    def close_report_window(self):
         self.report_window.destroy()
         self.report_window = None
         self.report_panel = None
+
+    def close_settings_window(self):
+        self.settings.destroy()
+        self.settings = None
 
     def apply_settings_changes(self):
         self.data_process.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
@@ -144,9 +169,6 @@ class UIWindow(Tk):
         self.file_text.configure(font=(self.font, self.font_size))
         self.gpss_text.configure(font=(self.font, self.font_size))
         self.console.configure(font=(self.font, self.font_size))
-
-        self.settings.destroy()
-        self.settings = None
 
     def open_report(self):
         if self.data_process.simulation_report is not None:
@@ -160,7 +182,7 @@ class UIWindow(Tk):
             report['state'] = DISABLED
             self.report_panel.add(report, text=f"[{get_current_time()}]  {self.data_process.common_name}")
             self.report_panel.pack(expand=1, fill='both')
-            self.report_window.protocol("WM_DELETE_WINDOW", self.change_report_status)
+            self.report_window.protocol("WM_DELETE_WINDOW", self.close_report_window)
             self.report_window.deiconify()
             self.report_window.mainloop()
         else:
@@ -176,7 +198,7 @@ class UIWindow(Tk):
     def open_settings(self):
         if self.settings is None:
             self.settings = SettingsWindow(self.ini_process, self.apply_settings_changes)
-        self.settings.protocol("WM_DELETE_WINDOW", self.apply_settings_changes)
+        self.settings.protocol("WM_DELETE_WINDOW", self.close_settings_window)
         self.settings.show()
 
     def build_menu(self):
@@ -210,25 +232,7 @@ class UIWindow(Tk):
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
 
-    def close_window(self):
-        if self.settings:
-            self.settings.destroy()
-        if self.report_window:
-            self.report_window.destroy()
 
-        answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
-        if answer is True:
-            if self.file_text.edit_modified():
-                answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
-                if answer is True:
-                    self.file_save()
-                elif answer is None:
-                    return
-                self.destroy()
-            else:
-                self.destroy()
-        else:
-            return
 
     def show(self):
         self.build_menu()
