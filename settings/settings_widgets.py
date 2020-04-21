@@ -63,10 +63,5 @@ class SettingsWindow(Tk):
         number = self.font_size_combobox.get()
         self.ini_file.insert_to_config_file("settings", "font_size", number)
         self.apply_changes()
-#
-#
-# ini_process = IniProcessing(path="settings.ini")
-# test = SettingsWindow(ini_process)
-# test.show()
 
 

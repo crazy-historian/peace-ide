@@ -3,7 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from widgets.common_widgets import ScrolledTextWidget
 from pce_processing.pce_file_processing import get_current_time
-from settings_widgets import SettingsWindow
+from settings.settings_widgets import SettingsWindow
 
 
 class UIWindow(Tk):
