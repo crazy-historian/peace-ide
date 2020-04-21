@@ -1,7 +1,9 @@
 from tkinter import *
+from tkinter import ttk
 from tkinter import messagebox
-from widgets.common_widgets import TextWidgetContainer, ScrolledTextWidget
+from widgets.common_widgets import ScrolledTextWidget
 from pce_processing.pce_file_processing import get_current_time
+from settings.settings_widgets import SettingsWindow
 
 
 class UIWindow(Tk):
@@ -21,56 +23,30 @@ class UIWindow(Tk):
         self.font = self.ini_process.get_from_config_file("settings", "font")
         self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
 
-        # widgets sizes
-        self.indent = 5
-        self.editor_size = [0, 0]
-        self.info_size = [0, 0]
-        self.window_width = 0
-        self.window_height = 0
-        self.correct_window_size(1366, 768)
+        # text widgets
+        self.file_text = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.gpss_text = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.console = ScrolledTextWidget(self, (self.font, self.font_size))
 
-        # containers for widgets
-        self.editor_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
-        self.gpss_container = TextWidgetContainer(self, self.editor_size, (self.font, self.font_size))
-        self.console_container = TextWidgetContainer(self, self.info_size, (self.font, self.font_size))
+        # report panel
+        self.report_window = None
+        self.report_panel = None
+        self.num_of_tubs = 0
 
-        # widgets
-        self.text_editor = ScrolledTextWidget(self.editor_container, self.editor_size)
-        self.gpss_text = ScrolledTextWidget(self.gpss_container, self.editor_size)
-        self.console = ScrolledTextWidget(self.console_container, self.editor_size)
-
-        # buttons
-        self.save_button = Button(self.editor_container, text="Save file", command=self.file_save)
-        self.compile_button = Button(self.editor_container, text="Compile", command=self.compile)
-        self.copy_button = Button(self.gpss_container, text="Copy to buffer", command=self.copy_to_buffer)
-        self.run_button = Button(self.gpss_container, text="Run model", command=self.run_model)
-        self.open_report_button = Button(self.gpss_container, text="Open review", command=self.open_report)
+        # settings
+        self.settings = None
 
         # menu widgets
         self.main_menu = Menu(self)
         self.file_menu = Menu(self.main_menu, tearoff=0)
         self.edit_menu = Menu(self.main_menu, tearoff=0)
+        self.run_menu = Menu(self.main_menu, tearoff=0)
+        self.gpss_menu = Menu(self.main_menu, tearoff=0)
+        self.settings_menu = Menu(self.main_menu, tearoff=0)
 
         # text tags
         self.console.tag_config('external_message', background="white", foreground="red")
         self.console.tag_config('successful', background="white", foreground="green")
-
-    def correct_window_size(self, width, height):
-        # screen_width = self.winfo_screenwidth()
-        # screen_height = self.winfo_screenheight()
-
-        # self.window_width = round(screen_width // 2)
-        # self.window_height = round(screen_height * (2 / 3))
-        # self.window_width = 1366
-        # self.window_height = 768
-        self.window_width = width
-        self.window_height = height
-
-        self.editor_size[0] = round((self.window_width - self.indent * 4) // 2)
-        self.editor_size[1] = round((self.window_height - self.indent * 5) * (2 / 3))
-
-        self.info_size[0] = self.editor_size[0] * 2 + self.indent * 2
-        self.info_size[1] = self.window_height - self.editor_size[1]
 
     def insert_to_console(self, text, source=None, tag=None):
         self.console['state'] = NORMAL
@@ -92,10 +68,10 @@ class UIWindow(Tk):
 
     def insert_separator(self, event):
         if event.char or event.keysym == "Backspace":
-            self.text_editor.edit_separator()
+            self.file_text.edit_separator()
 
     def update_title(self, event=None, gpss=False):
-        if self.text_editor.edit_modified():
+        if self.file_text.edit_modified():
             self.title(f"Peace *{self.data_process.pce_full_name}")
         else:
             self.title(f"Peace {self.data_process.pce_full_name}")
@@ -142,6 +118,7 @@ class UIWindow(Tk):
     def file_open(self):
         returned_code = self.data_process.file_open()
         if returned_code != 1:
+            self.file_text.edit_modified(False)
             self.insert_to_console("открыт новый файл")
             if isinstance(returned_code, str):
                 self.update_title(gpss=returned_code)
@@ -154,61 +131,16 @@ class UIWindow(Tk):
             self.insert_to_console("текущий файл закрыт")
             self.update_title(gpss=True)
 
-    def open_report(self):
-        if self.data_process.simulation_report is not None:
-            sub_window = Tk()
-            sub_window_parameters = "{}x{}+100+100".format(self.window_width, self.window_height + self.indent * 2)
-            sub_window.geometry(sub_window_parameters)
-            sub_window.resizable(False, False)
-            sub_window.title(f"Simulation report {self.data_process.simulation_report}")
-
-            review_container = TextWidgetContainer(sub_window,
-                                                   (self.window_width, self.window_height + self.indent * 2),
-                                                   (self.font, self.font_size))
-
-            review_container.show(row=0, column=0, indent_x=self.indent)
-            review_widget = ScrolledTextWidget(review_container,
-                                               (self.window_width, self.window_height + self.indent * 2))
-            review_widget.show(row=0, column=0)
-
-            report_text = self.data_process.open_report()
-            review_widget.insert(1.0, report_text)
-            review_widget['state'] = DISABLED
-            sub_window.mainloop()
-        else:
-            messagebox.showerror("Error!", "There is no .lis file")
-
-    def copy_to_buffer(self):
-        code = self.data_process.copy_to_buffer()
-        self.text_editor.clipboard_clear()
-        self.clipboard_append(code)
-        if code:
-            self.insert_to_console("GPSS код скопирован в буфер обмена")
-
-    def build_menu(self):
-        self.main_menu = Menu(self)
-        self.config(menu=self.main_menu)
-        # file toolbar
-        self.file_menu.add_command(label="New file", command=self.file_close)
-        self.file_menu.add_command(label="Open...", command=self.file_open)
-        self.file_menu.add_command(label="Close...", command=self.file_close)
-        self.file_menu.add_command(label="Save...", command=self.file_save)
-        self.file_menu.add_command(label="Save as...", command=self.file_save_as)
-        self.file_menu.add_command(label="Exit", command=self.close_window)
-        self.main_menu.add_cascade(label='File', menu=self.file_menu)
-        # edit toolbar
-        self.edit_menu.add_command(label="Copy", command=self.copy)
-        self.edit_menu.add_command(label="Paste", command=self.paste)
-        self.edit_menu.add_command(label="Cut", command=self.cut)
-        self.edit_menu.add_separator()
-        self.edit_menu.add_command(label="Undo", command=self.undo)
-        self.edit_menu.add_command(label="Redo", command=self.redo)
-        self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
-
+    # window closing
     def close_window(self):
+        if self.settings:
+            self.settings.destroy()
+        if self.report_window:
+            self.report_window.destroy()
+
         answer = messagebox.askyesno("Выход из Peace", "Вы действительно хотите выйти?")
         if answer is True:
-            if self.text_editor.edit_modified():
+            if self.file_text.edit_modified():
                 answer = messagebox.askyesnocancel("Выход из Peace", "Сохранить файл перед закрытием?")
                 if answer is True:
                     self.file_save()
@@ -220,11 +152,86 @@ class UIWindow(Tk):
         else:
             return
 
-    def show_text_editor(self):
-        # text editor
-        self.editor_container.add_buttons([self.compile_button, self.save_button])
-        self.editor_container.show(row=0, column=0, indent_x=self.indent)
-        self.text_editor.show(row=0, column=0)
+    def close_report_window(self):
+        self.report_window.destroy()
+        self.report_window = None
+        self.report_panel = None
+
+    def close_settings_window(self):
+        self.settings.destroy()
+        self.settings = None
+
+    def apply_settings_changes(self):
+        self.data_process.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
+        self.data_process.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
+        self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
+
+        self.file_text.configure(font=(self.font, self.font_size))
+        self.gpss_text.configure(font=(self.font, self.font_size))
+        self.console.configure(font=(self.font, self.font_size))
+
+    def open_report(self):
+        if self.data_process.simulation_report is not None:
+            if self.report_window is None:
+                self.report_window = Tk()
+                self.report_window.title(f"{self.data_process.pce_path} - simulation reports")
+                self.report_panel = ttk.Notebook(self.report_window)
+            report = ScrolledTextWidget(self.report_panel, (self.font, self.font_size))
+            report_text = self.data_process.open_report()
+            report.insert(1.0, report_text)
+            report['state'] = DISABLED
+            self.report_panel.add(report, text=f"[{get_current_time()}]  {self.data_process.common_name}")
+            self.report_panel.pack(expand=1, fill='both')
+            self.report_window.protocol("WM_DELETE_WINDOW", self.close_report_window)
+            self.report_window.deiconify()
+            self.report_window.mainloop()
+        else:
+            messagebox.showerror("Error!", "There is no .lis file")
+
+    def copy_to_buffer(self):
+        code = self.data_process.copy_to_buffer()
+        self.file_text.clipboard_clear()
+        self.clipboard_append(code)
+        if code:
+            self.insert_to_console("GPSS код скопирован в буфер обмена")
+
+    def open_settings(self):
+        if self.settings is None:
+            self.settings = SettingsWindow(self.ini_process, self.apply_settings_changes)
+        self.settings.protocol("WM_DELETE_WINDOW", self.close_settings_window)
+        self.settings.show()
+
+    def build_menu(self):
+        self.main_menu = Menu(self)
+        self.config(menu=self.main_menu)
+        # file toolbar
+        self.file_menu.add_command(label="New file", command=self.file_close)
+        self.file_menu.add_command(label="Open file", command=self.file_open)
+        self.file_menu.add_command(label="Close file", command=self.file_close)
+        self.file_menu.add_command(label="Save file ", command=self.file_save)
+        self.file_menu.add_command(label="Save file as...", command=self.file_save_as)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Exit", command=self.close_window)
+        self.main_menu.add_cascade(label='File', menu=self.file_menu)
+        # edit toolbar
+        self.edit_menu.add_command(label="Copy", command=self.copy)
+        self.edit_menu.add_command(label="Paste", command=self.paste)
+        self.edit_menu.add_command(label="Cut", command=self.cut)
+        self.edit_menu.add_separator()
+        self.edit_menu.add_command(label="Undo", command=self.undo)
+        self.edit_menu.add_command(label="Redo", command=self.redo)
+        self.main_menu.add_cascade(label='Edit', menu=self.edit_menu)
+        # run toolbar
+        self.run_menu.add_command(label="Compile", command=self.compile)
+        self.run_menu.add_command(label="Run model", command=self.run_model)
+        self.run_menu.add_command(label="Open report", command=self.open_report)
+        self.main_menu.add_cascade(label='Run', menu=self.run_menu)
+        # settings toolbar
+        self.settings_menu.add_command(label="Open settings", command=self.open_settings)
+        self.main_menu.add_cascade(label="Settings", menu=self.settings_menu)
+        # gpss toolbar
+        self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
+
 
     def show_gpss_label(self):
         # gpss code
@@ -233,49 +240,49 @@ class UIWindow(Tk):
         self.gpss_text.show(row=0, column=3)
         self.gpss_text['state'] = DISABLED
 
-    def show_compile_info(self):
-        self.console_container.show(row=2, column=0, indent_x=self.indent, indent_y=self.indent, columnspan=6)
-        self.console.show(row=2, column=0)
-
-    def pack(self):
+    def show(self):
         self.build_menu()
-        self.show_text_editor()
-        self.show_gpss_label()
-        self.show_compile_info()
+        self.file_text.place(relx=0, rely=0, relw=0.6, relh=0.7)
+        self.gpss_text.place(relx=0.6, rely=0, relw=0.4, relh=0.7)
+        self.console.place(relx=0, rely=0.7, relw=1, relh=0.3)
 
     # events in widgets
-    def context_menu(self, event):
+    def context_file_menu(self, event):
         self.edit_menu.post(event.x_root, event.y_root)
 
+    def context_gpss_menu(self, event):
+        self.gpss_menu.post(event.x_root, event.y_root)
+
     def copy(self):
-        self.text_editor.clipboard_clear()
+        self.file_text.clipboard_clear()
         try:
-            self.text_editor.clipboard_append(self.text_editor.selection_get())
+            self.file_text.clipboard_append(self.file_text.selection_get())
         except TclError:
             pass
 
     def paste(self):
-        self.text_editor.insert(INSERT, self.text_editor.clipboard_get())
+        self.file_text.insert(INSERT, self.file_text.clipboard_get())
 
     def cut(self):
         self.copy()
-        self.text_editor.delete("sel.first", "sel.last")
+        self.file_text.delete("sel.first", "sel.last")
 
     def undo(self, event=None):
-        self.text_editor.edit_undo()
+        self.file_text.edit_undo()
 
     def redo(self, event=None):
         try:
-            self.text_editor.edit_redo()
+            self.file_text.edit_redo()
         except TclError as error:
             if str(error) == "nothing to redo":
                 pass
 
     def bind_events(self):
-        self.text_editor.bind("<<Modified>>", self.update_title)
-        self.text_editor.bind("<Key>", self.insert_separator)
-        self.text_editor.bind("<Button-3>", self.context_menu)
-        self.text_editor.bind("<Control-x>", self.redo)
+        self.file_text.bind("<<Modified>>", self.update_title)
+        self.file_text.bind("<Key>", self.insert_separator)
+        self.file_text.bind("<Button-3>", self.context_file_menu)
+        self.gpss_text.bind("<Button-3>", self.context_gpss_menu)
+        self.file_text.bind("<Control-x>", self.redo)
         self.bind("<Control-s>", self.file_save)
         self.bind("<F5>", self.compile)
         self.bind("<F6>", self.run_model)
