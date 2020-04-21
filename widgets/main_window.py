@@ -232,8 +232,6 @@ class UIWindow(Tk):
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
 
-
-
     def show(self):
         self.build_menu()
         self.file_text.place(relx=0, rely=0, relw=0.6, relh=0.7)
