@@ -67,10 +67,14 @@ class UIWindow(Tk):
             self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stderr}\n",
                                 "external_message")
         elif source == "GIT":
-            if not "Already up to date" in self.data_process.stdout:
+            if self.data_process.stdout:
                 self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stdout}")
-                self.data_process.stdout = None
-                return 1
+                if "Already up to date" in self.data_process.stdout:
+                    self.data_process.stdout = None
+                    return 0
+                else:
+                    self.data_process.stdout = None
+                    return 1
             if self.data_process.stderr:
                 self.console.insert(END, f"{get_current_time()} [{source}] {self.data_process.stderr}\n",
                                     "external_message")
@@ -290,7 +294,11 @@ class UIWindow(Tk):
         self.file_text.delete("sel.first", "sel.last")
 
     def undo(self, event=None):
-        self.file_text.edit_undo()
+        try:
+            self.file_text.edit_undo()
+        except TclError as error:
+            if str(error) == "nothing to undo":
+                pass
 
     def redo(self, event=None):
         try:
