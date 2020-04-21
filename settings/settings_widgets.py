@@ -35,12 +35,12 @@ class SettingsWindow(Tk):
         self.peace_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "peace_core_path"))
         self.gpss_path_entry.place(x=150, y=40, height=25, width=350)
         self.gpss_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "gpssh_path"))
-        self.font_size_combobox.place(x=150, y=70, height=25, width=40)
+        self.font_size_combobox.place(x=150, y=70, height=25, width=50)
         self.font_size_combobox.insert(0, self.ini_file.get_from_config_file("settings", "font_size"))
 
         self.peace_path_button.place(x=505, y=10, height=25, width=25)
         self.gpss_path_button.place(x=505, y=40, height=25, width=25)
-        self.font_size_button.place(x=200, y=70, height=25, width=100)
+        self.font_size_button.place(x=220, y=70, height=25, width=100)
 
         self.geometry("550x100+600+400")
         self.resizable(False, False)
