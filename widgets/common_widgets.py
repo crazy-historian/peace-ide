@@ -1,7 +1,4 @@
-from tkinter import Frame, Text, Scrollbar
 from tkinter import GROOVE
-import tkinter as tk
-import tkinter.ttk as ttk
 import tkinter.scrolledtext as scrlltxt
 
 

@@ -1,7 +1,6 @@
 from tkinter import Tk
 from tkinter import filedialog
 from os.path import isfile
-from ini_processing import IniProcessing
 import tkinter as tk
 import tkinter.ttk as ttk
 
