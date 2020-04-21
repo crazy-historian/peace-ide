@@ -26,7 +26,9 @@ class UIWindow(Tk):
         # text widgets
         self.file_text = ScrolledTextWidget(self, (self.font, self.font_size))
         self.gpss_text = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.gpss_text['state'] = DISABLED
         self.console = ScrolledTextWidget(self, (self.font, self.font_size))
+        self.console['state'] = DISABLED
 
         # report panel
         self.report_window = None
@@ -139,7 +141,7 @@ class UIWindow(Tk):
                 "файл сохранен с другим именем")
             self.update_title(gpss=True)
 
-    def file_open(self):
+    def file_open(self, event=None):
         returned_code = self.data_process.file_open()
         if returned_code != 1:
             self.file_text.edit_modified(False)
@@ -149,14 +151,14 @@ class UIWindow(Tk):
             else:
                 self.update_title(gpss=True)
 
-    def file_close(self):
+    def file_close(self, event=None):
         self.data_process.file_close()
         if self.data_process.file_close() == 0:
             self.insert_to_console("текущий файл закрыт")
             self.update_title(gpss=True)
 
     # window closing
-    def close_window(self):
+    def close_window(self, event=None):
         if self.settings:
             self.settings.destroy()
         if self.report_window:
@@ -307,6 +309,7 @@ class UIWindow(Tk):
         self.bind("<Control-o>", self.file_open)
         self.bind("<Control-q>", self.file_close)
         self.bind("<Control-s>", self.file_save)
+        self.bind("<Control-z>", self.undo)
 
         self.file_text.bind("<Control-r>", self.redo)
 
