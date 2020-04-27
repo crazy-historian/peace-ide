@@ -10,6 +10,7 @@ if __name__ == "__main__":
 
     window.ini_process = ini_process
     window.data_process = data_process
+    window.configure_color_theme()
     window.bind_events()
     window.geometry("1366x768+500+100")
     window.show()

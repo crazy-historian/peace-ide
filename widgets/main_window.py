@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from widgets.common_widgets import ScrolledTextWidget
+from widgets.common_widgets import ScrolledTextWidget, DefaultColorTheme, DarkColorTheme
 from pce_processing.pce_file_processing import get_current_time
 from settings.settings_widgets import SettingsWindow
 
@@ -19,6 +19,10 @@ class UIWindow(Tk):
         self.title("PeaceStorm. It is a simple and useful IDE for Peace interpreter.")
         self.changes_in_text_editor = False
 
+        # color_theme
+        self.color_theme_enum = DefaultColorTheme
+        self.color_theme = "default"
+
         # data from .ini file
         self.font = self.ini_process.get_from_config_file("settings", "font")
         self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
@@ -30,13 +34,12 @@ class UIWindow(Tk):
         self.console = ScrolledTextWidget(self, (self.font, self.font_size))
         self.console['state'] = DISABLED
 
-        # report panel
+        # sub windows
+        self.settings = None
         self.report_window = None
         self.report_panel = None
+        self.reports = []
         self.num_of_tubs = 0
-
-        # settings
-        self.settings = None
 
         # menu widgets
         self.main_menu = Menu(self)
@@ -46,12 +49,34 @@ class UIWindow(Tk):
         self.gpss_menu = Menu(self.main_menu, tearoff=0)
         self.settings_menu = Menu(self.main_menu, tearoff=0)
 
-        # text tags
-        self.console.tag_config('external_message', background="white", foreground="red")
-        self.console.tag_config('successful', background="white", foreground="green")
+    def configure_color_theme(self):
+        self.configure(background=self.color_theme_enum.widget_background.value)
+        for menu in (self.file_menu, self.edit_menu, self.run_menu, self.gpss_menu, self.settings_menu):
+            menu.configure(background=self.color_theme_enum.widget_background.value)
+            menu.configure(foreground=self.color_theme_enum.code_color.value)
+            menu.configure(activebackground=self.color_theme_enum.selection_color.value)
+
+        for widget in (self.file_text, self.gpss_text, self.console):
+            widget.change_color(self.color_theme_enum)
+
+        if self.settings:
+            self.settings.configure_color_theme(self.color_theme_enum)
+
+        if len(self.reports) != 0:
+            for report in self.reports:
+                report.configure(background=self.color_theme_enum.widget_background.value)
+                report.configure(foreground=self.color_theme_enum.code_color.value)
+                report.configure(selectbackground=self.color_theme_enum.selection_color.value)
+
+        self.console.tag_config('normal',
+                                foreground=self.color_theme_enum.console_color.value)
+        self.console.tag_config('external_message',
+                                foreground=self.color_theme_enum.error_color.value)
+        self.console.tag_config('successful',
+                                foreground=self.color_theme_enum.success_color.value)
 
     # FixMe: refactor
-    def insert_to_console(self, text, source=None, tag=None):
+    def insert_to_console(self, text, source=None, tag='normal'):
         self.console['state'] = NORMAL
         self.console.insert(END, f"{get_current_time()} [IDE] :: {text}\n", tag)
         if source == "PEACE":
@@ -176,6 +201,7 @@ class UIWindow(Tk):
 
     def close_report_window(self):
         self.report_window.destroy()
+        self.reports=[]
         self.report_window = None
         self.report_panel = None
 
@@ -200,8 +226,16 @@ class UIWindow(Tk):
             if self.report_window is None:
                 self.report_window = Tk()
                 self.report_window.title(f"{self.data_process.pce_path} - simulation reports")
+                self.report_window.configure(background=self.color_theme_enum.widget_background.value)
                 self.report_panel = ttk.Notebook(self.report_window)
+
             report = ScrolledTextWidget(self.report_panel, (self.font, self.font_size))
+            # - color configure -
+            report.configure(background=self.color_theme_enum.widget_background.value)
+            report.configure(foreground=self.color_theme_enum.code_color.value)
+            report.configure(selectbackground=self.color_theme_enum.selection_color.value)
+            #
+            self.reports.append(report)
             report_text = self.data_process.open_report()
             report.insert(1.0, report_text)
             report['state'] = DISABLED
@@ -216,6 +250,7 @@ class UIWindow(Tk):
     def open_settings(self):
         if self.settings is None:
             self.settings = SettingsWindow(self.ini_process, self.apply_settings_changes)
+            self.settings.configure_color_theme(self.color_theme_enum)
         self.settings.protocol("WM_DELETE_WINDOW", self.close_settings_window)
         self.settings.show()
 
@@ -247,9 +282,19 @@ class UIWindow(Tk):
         # settings toolbar
         self.settings_menu.add_command(label="Open settings", command=self.open_settings)
         self.settings_menu.add_command(label="Update IDE", command=self.update_ide)
+        self.settings_menu.add_command(label="Change color theme", command=self.change_color_theme)
         self.main_menu.add_cascade(label="Settings", menu=self.settings_menu)
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
+
+    def change_color_theme(self, event=None):
+        if self.color_theme == "default":
+            self.color_theme_enum = DarkColorTheme
+            self.color_theme = "dark"
+        elif self.color_theme == "dark":
+            self.color_theme_enum = DefaultColorTheme
+            self.color_theme = "default"
+        self.configure_color_theme()
 
     # -*- packing widgets -*-
     def show(self):
@@ -267,18 +312,6 @@ class UIWindow(Tk):
 
     def context_gpss_menu(self, event):
         self.gpss_menu.post(event.x_root, event.y_root)
-
-    def insert_closing_symbols(self, event):
-        if event.char == '(':
-            self.file_text.delete(1.0, END)
-            self.file_text.insert(CURRENT, '()')
-            # position = float(self.file_text.index(INSERT))
-            # position += 1.1
-            # self.file_text.mark_set("insert", f"{position}")
-            # #
-
-        elif event.char == '\"':
-            self.file_text.insert(END, '\"')
 
     def insert_separator(self, event):
         if event.char or event.keysym == "Backspace":
@@ -328,7 +361,6 @@ class UIWindow(Tk):
     def bind_events(self):
         self.file_text.bind("<<Modified>>", self.update_title)
         self.file_text.bind("<Key>", self.insert_separator)
-        self.file_text.bind("<Key>", self.insert_closing_symbols)
         self.file_text.bind("<Button-3>", self.context_file_menu)
         self.gpss_text.bind("<Button-3>", self.context_gpss_menu)
 
