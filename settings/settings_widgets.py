@@ -31,7 +31,7 @@ class SettingsWindow(Tk):
         self.font_size_button = tk.Button(self, text="Apply changes", command=self.apply)
 
     def on_scale(self, value):
-        self.font_size = int(value)
+        self.font_size = value
 
     def configure_color_theme(self, color_theme):
         self.configure(background=color_theme.widget_background.value)
