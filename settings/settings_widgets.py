@@ -38,6 +38,9 @@ class SettingsWindow(Tk):
         self.gpss_path_entry.place(x=150, y=40, height=25, width=350)
         self.gpss_path_entry.delete(0, tk.END)
         self.gpss_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "gpss_path"))
+        self.peace_path_entry['state'] = tk.DISABLED
+        self.gpss_path_entry['state'] = tk.DISABLED
+
         self.font_size_combobox.place(x=150, y=70, height=25, width=50)
         self.font_size_combobox.insert(0, self.ini_file.get_from_config_file("settings", "font_size"))
 
@@ -51,13 +54,14 @@ class SettingsWindow(Tk):
 
     def choose_file(self, entry, setting_name):
         file_name = filedialog.askopenfilename(title="Открытие")
+        entry['state'] = tk.NORMAL
         entry.delete(0, tk.END)
         if isfile(file_name):
             entry.insert(0, file_name)
             self.ini_file.insert_to_config_file("settings", setting_name, file_name)
-            entry['background'] = '#7CFC00'
         else:
-            entry['background'] = '#8B0000'
+            entry.insert(0, "No file")
+        entry['state'] = tk.DISABLED
         self.deiconify()
         self.grab_set()
 
