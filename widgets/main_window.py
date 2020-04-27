@@ -83,23 +83,7 @@ class UIWindow(Tk):
         self.console.see(END)
         self.console['state'] = DISABLED
 
-    def insert_separator(self, event):
-        if event.char or event.keysym == "Backspace":
-            self.file_text.edit_separator()
-
-    def update_title(self, event=None, gpss=False):
-        if self.file_text.edit_modified():
-            self.title(f"Peace *{self.data_process.pce_full_name}")
-        else:
-            self.title(f"Peace {self.data_process.pce_full_name}")
-        if gpss:
-            self.gpss_text['state'] = NORMAL
-            self.gpss_text.delete(1.0, END)
-            if isinstance(gpss, str):
-                self.gpss_text.insert(1.0, gpss)
-            self.gpss_text['state'] = DISABLED
-
-    # external commands
+    # -*- external commands -*-
     def compile(self, event=None):
         returned_code = self.data_process.compile()
         self.insert_to_console("начало компиляции", source="PEACE")
@@ -133,6 +117,7 @@ class UIWindow(Tk):
         else:
             messagebox.showerror("Error!", "Some problem with update or git")
 
+    # -*- file processing -*-
     def file_save(self, event=None):
         if self.data_process.file_save() == 0:
             self.insert_to_console(
@@ -161,7 +146,14 @@ class UIWindow(Tk):
             self.insert_to_console("текущий файл закрыт")
             self.update_title(gpss=True)
 
-    # window closing
+    def copy_to_buffer(self):
+        code = self.data_process.copy_to_buffer()
+        self.file_text.clipboard_clear()
+        self.clipboard_append(code)
+        if code:
+            self.insert_to_console("GPSS код скопирован в буфер обмена")
+
+    # -*- window closing -*-
     def close_window(self, event=None):
         if self.settings:
             self.settings.destroy()
@@ -182,7 +174,6 @@ class UIWindow(Tk):
         else:
             return
 
-    # window closing
     def close_report_window(self):
         self.report_window.destroy()
         self.report_window = None
@@ -194,14 +185,16 @@ class UIWindow(Tk):
 
     def apply_settings_changes(self):
         self.data_process.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
-        self.data_process.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
+        self.data_process.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpss_path")
         self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
 
+        print(self.data_process.gpssh_interpreter_path)
         self.file_text.configure(font=(self.font, self.font_size))
         self.gpss_text.configure(font=(self.font, self.font_size))
         self.console.configure(font=(self.font, self.font_size))
         self.close_settings_window()
 
+    # -*- sub windows -*-
     def open_report(self, event=None):
         if self.data_process.simulation_report is not None:
             if self.report_window is None:
@@ -219,13 +212,6 @@ class UIWindow(Tk):
             self.report_window.mainloop()
         else:
             messagebox.showerror("Error!", "There is no .lis file")
-
-    def copy_to_buffer(self):
-        code = self.data_process.copy_to_buffer()
-        self.file_text.clipboard_clear()
-        self.clipboard_append(code)
-        if code:
-            self.insert_to_console("GPSS код скопирован в буфер обмена")
 
     def open_settings(self):
         if self.settings is None:
@@ -265,6 +251,7 @@ class UIWindow(Tk):
         # gpss toolbar
         self.gpss_menu.add_command(label="Copy All", command=self.copy_to_buffer)
 
+    # -*- packing widgets -*-
     def show(self):
         self.build_menu()
         self.file_text.place(relx=0, rely=0, relw=0.6, relh=0.7)
@@ -272,13 +259,44 @@ class UIWindow(Tk):
         self.gpss_text['state'] = DISABLED
         self.console.place(relx=0, rely=0.7, relw=1, relh=0.3)
 
-    # events in widgets
+    # -*- events in widgets -*-
+
+    # context menu
     def context_file_menu(self, event):
         self.edit_menu.post(event.x_root, event.y_root)
 
     def context_gpss_menu(self, event):
         self.gpss_menu.post(event.x_root, event.y_root)
 
+    def insert_closing_symbols(self, event):
+        if event.char == '(':
+            self.file_text.delete(1.0, END)
+            self.file_text.insert(CURRENT, '()')
+            # position = float(self.file_text.index(INSERT))
+            # position += 1.1
+            # self.file_text.mark_set("insert", f"{position}")
+            # #
+
+        elif event.char == '\"':
+            self.file_text.insert(END, '\"')
+
+    def insert_separator(self, event):
+        if event.char or event.keysym == "Backspace":
+            self.file_text.edit_separator()
+
+    def update_title(self, event=None, gpss=False):
+        if self.file_text.edit_modified():
+            self.title(f"Peace *{self.data_process.pce_full_name}")
+        else:
+            self.title(f"Peace {self.data_process.pce_full_name}")
+        if gpss:
+            self.gpss_text['state'] = NORMAL
+            self.gpss_text.delete(1.0, END)
+            if isinstance(gpss, str):
+                self.gpss_text.insert(1.0, gpss)
+            self.gpss_text['state'] = DISABLED
+
+    # edit tools
     def copy(self):
         self.file_text.clipboard_clear()
         try:
@@ -310,6 +328,7 @@ class UIWindow(Tk):
     def bind_events(self):
         self.file_text.bind("<<Modified>>", self.update_title)
         self.file_text.bind("<Key>", self.insert_separator)
+        self.file_text.bind("<Key>", self.insert_closing_symbols)
         self.file_text.bind("<Button-3>", self.context_file_menu)
         self.gpss_text.bind("<Button-3>", self.context_gpss_menu)
 

@@ -16,7 +16,7 @@ class PceFileProcessing:
         self.text_editor = text_editor
 
         self.peace_interpreter_path = self.ini_process.get_from_config_file("settings", "peace_core_path")
-        self.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpssh_path")
+        self.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpss_path")
 
         self.pce_full_name = None
         self.title = self.pce_full_name
@@ -140,11 +140,14 @@ class PceFileProcessing:
     def execute_external_command(self, command, *parameters):
         argument_list = [command]
         argument_list.extend(parameters)
-        command_call = subprocess.run(argument_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                      text=True)
-        self.stdout = command_call.stdout
-        self.stderr = command_call.stderr
-        return command_call.returncode
+        try:
+            command_call = subprocess.run(argument_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                          text=True)
+            self.stdout = command_call.stdout
+            self.stderr = command_call.stderr
+            return command_call.returncode
+        except OSError:
+            messagebox.showerror("Error!", "Your gpssh.exe file is not executable.")
 
     def compile(self):
         if self.peace_interpreter_path == "None" or not os.path.isfile(self.peace_interpreter_path):

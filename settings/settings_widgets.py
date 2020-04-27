@@ -11,6 +11,7 @@ class SettingsWindow(Tk):
         self.title("Settings")
         self.apply_changes = apply_callback
         self.ini_file = ini_file
+
         self.peace_path_label = tk.Label(self, text="Путь до Peace:")
         self.gpss_path_label = tk.Label(self, text="Путь до gpssh.exe:")
         self.font_size_label = tk.Label(self, text="Размер шрифта:")
@@ -18,6 +19,7 @@ class SettingsWindow(Tk):
         self.peace_path_entry = tk.Entry(self)
         self.gpss_path_entry = tk.Entry(self)
         self.font_size_combobox = ttk.Combobox(self, values=[str(i) for i in range(8, 23)])
+
         self.peace_path_button = tk.Button(self, text="...",
                                            command=lambda widget=self.peace_path_entry, name="peace_core_path":
                                            self.choose_file(widget, name))
@@ -35,7 +37,7 @@ class SettingsWindow(Tk):
         self.peace_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "peace_core_path"))
         self.gpss_path_entry.place(x=150, y=40, height=25, width=350)
         self.gpss_path_entry.delete(0, tk.END)
-        self.gpss_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "gpssh_path"))
+        self.gpss_path_entry.insert(0, self.ini_file.get_from_config_file("settings", "gpss_path"))
         self.font_size_combobox.place(x=150, y=70, height=25, width=50)
         self.font_size_combobox.insert(0, self.ini_file.get_from_config_file("settings", "font_size"))
 
