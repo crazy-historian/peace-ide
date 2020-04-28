@@ -214,7 +214,6 @@ class UIWindow(Tk):
         self.data_process.gpssh_interpreter_path = self.ini_process.get_from_config_file("settings", "gpss_path")
         self.font_size = self.ini_process.get_from_config_file("settings", "font_size")
 
-        print(self.data_process.gpssh_interpreter_path)
         self.file_text.configure(font=(self.font, self.font_size))
         self.gpss_text.configure(font=(self.font, self.font_size))
         self.console.configure(font=(self.font, self.font_size))

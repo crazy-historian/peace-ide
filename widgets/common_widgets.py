@@ -5,7 +5,7 @@ import tkinter.scrolledtext as scrlltxt
 
 class ScrolledTextWidget(scrlltxt.ScrolledText):
     def __init__(self, parent_widget, font):
-        super().__init__(master=parent_widget, borderwidth=5, relief=GROOVE)
+        super().__init__(master=parent_widget, borderwidth=2, relief=GROOVE)
         self['undo'] = True
         self['font'] = font
         self.frame['padx'] = 5
@@ -30,7 +30,7 @@ class DefaultColorTheme(Enum):
     success_color = 'green'
     text_background_color = '#ECEFF4'
     widget_background = '#ECEFF4'
-    selection_color = '#4C566A'
+    selection_color = '#5E81AC'
 
 
 class DarkColorTheme(Enum):
@@ -38,6 +38,6 @@ class DarkColorTheme(Enum):
     console_color = '#88C0D0'
     error_color = '#BF616A'
     success_color = '#A3BE8C'
-    text_background_color = '#3B4252'
+    text_background_color = '#2E3440'
     widget_background = '#2E3440'
     selection_color = '#4C566A'
