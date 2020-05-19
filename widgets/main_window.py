@@ -201,7 +201,7 @@ class UIWindow(Tk):
 
     def close_report_window(self):
         self.report_window.destroy()
-        self.reports=[]
+        self.reports = []
         self.report_window = None
         self.report_panel = None
 

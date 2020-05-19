@@ -5,7 +5,7 @@ import tkinter.scrolledtext as scrlltxt
 
 class ScrolledTextWidget(scrlltxt.ScrolledText):
     def __init__(self, parent_widget, font):
-        super().__init__(master=parent_widget, borderwidth=2, relief=GROOVE)
+        super().__init__(master=parent_widget, borderwidth=2, relief=GROOVE, tabs=50)
         self['undo'] = True
         self['font'] = font
         self.frame['padx'] = 5
